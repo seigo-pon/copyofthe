@@ -1,0 +1,32 @@
+{
+  "name": "copyofthe",
+  "version": "1.0.0",
+  "description": "This is an electron app for the clipboard log.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "NODE_ENV=development electron .",
+    "build": "NODE_ENV=production electron-builder"
+  },
+  "build": {
+    "appId": "com.electron.copyofthe",
+    "mac": {
+      "target": "dmg"
+    },
+    "directories": {
+      "output": "docs"
+    }
+  },
+  "author": "seigo-pon",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@vue/cli": "^4.5.8",
+    "dotenv": "^8.2.0",
+    "electron": "^10.1.5"
+  },
+  "dependencies": {
+    "python-shell": "^2.0.2",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6"
+  }
+}
