@@ -45,8 +45,6 @@ class ClipboardModel(db.Model):
 
   uid = db.Column(db.String(100), primary_key=True)
   value = db.Column(db.Text, nullable=False)
-  tags = db.relationship("ClipboardTagModel", backref="clipboard_table")
-  copies = db.relationship("ClipboardCopyModel", backref="clipboard_table")
   created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
   updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
@@ -125,6 +123,7 @@ class ClipboardTagModel(db.Model):
 
   uid = db.Column(db.String(100), primary_key=True)
   clipboard_uid = db.Column(db.Integer, db.ForeignKey('clipboard_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
+  clipboard = db.relationship("ClipboardModel", backref="tags")
   tag_uid = db.Column(db.Integer, db.ForeignKey('tag_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
   created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
@@ -160,6 +159,7 @@ class ClipboardCopyModel(db.Model):
 
   uid = db.Column(db.String(100), primary_key=True)
   clipboard_uid = db.Column(db.Integer, db.ForeignKey('clipboard_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
+  clipboard = db.relationship("ClipboardModel", backref="copies")
   created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
   @staticmethod

@@ -14,10 +14,10 @@ app.register_blueprint(api_bp)
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def index(path):
-    return render_template('index.html')
+  return render_template('index.html')
 
 if __name__ == "__main__":
-    with app.app_context():
-      init_db(app)
+  with app.app_context():
+    init_db(app)
 
-    app.run(host='127.0.0.1', port=5000)
+  app.run(host='127.0.0.1', port=5000)

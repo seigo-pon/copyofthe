@@ -7,7 +7,7 @@ from models import (
   TagModel, ClipboardModel, ClipboardTagModel, ClipboardCopyModel,
 )
 from schemas import (
-  TagSchema, ClipboardSchema, ClipboardTagSchema, ClipboardCopySchema
+  TagSchema, ClipboardSchema, ClipboardCopySchema
 )
 
 api_bp = Blueprint('api',
@@ -21,7 +21,7 @@ class ApiRequestParser:
 
   def parse_args(self):
     self.args = self.parser.parse_args()
-    print(vars(self.args))
+    print('args:', vars(self.args))
 
   def get(self, key):
     return self.args.get(key)
@@ -34,8 +34,9 @@ def catch_value(app, is_first, value):
 
     with app.app_context():
       clipboard_value = ClipboardModel.get_by_latest()
-      if clipboard_value.value != value:
-        ClipboardModel.insert(value)
+      if clipboard_value is not None:
+        if clipboard_value.value != value:
+          ClipboardModel.insert(value)
   else:
     print('Copied to clipboard: {}'.format(value))
 
@@ -56,7 +57,7 @@ class Tag(Resource):
     tags = TagModel.get_by_key(parser.get('key'))
     if tags is None:
       return make_response('', 400)
-    print([vars(tag) for tag in tags])
+    print('tag get:', [vars(tag) for tag in tags])
 
     tag_schema = TagSchema(many=True)
     return make_response(jsonify({'tags': tag_schema.dump(tags)}))
@@ -76,7 +77,7 @@ class Tag(Resource):
     tags = TagModel.get_by_value(parser.get('tag'))
     if tags and len(tags) > 0:
       return make_response('', 409)
-    print([vars(tag) for tag in tags])
+    print('tag post:', [vars(tag) for tag in tags])
 
     TagModel.insert(parser.get('tag'))
     return make_response('', 201)
@@ -88,7 +89,7 @@ class Clipboard(Resource):
       def __init__(self):
         super().__init__()
         self.parser.add_argument('key', type=str, location='args')
-        self.parser.add_argument('tags', type=str, action='split', location='args')
+        self.parser.add_argument('tags', type=str, action='append', location='args')
         self.parser.add_argument('page', type=int, location='args')
         self.parser.add_argument('limit', type=int, location='args')
 
@@ -103,7 +104,7 @@ class Clipboard(Resource):
     )
     if clipboard_values is None:
       return make_response('', 400)
-    print([vars(clipboard_value) for clipboard_value in clipboard_values])
+    print('clipboard get:', [vars(clipboard_value) for clipboard_value in clipboard_values])
 
     clipboard_schema = ClipboardSchema(many=True)
     return make_response(jsonify({'clipboard_values': clipboard_schema.dump(clipboard_values)}))
@@ -121,22 +122,31 @@ class Clipboard(Resource):
     if parser.get('clipboard_uid') is None:
       return make_response('', 400)
 
-    clipboard_values = ClipboardModel.get_by_value(parser.get('clipboard_uid'))
-    if clipboard_values is None or len(clipboard_values) == 0:
+    clipboard_value = ClipboardModel.get_by_uid(parser.get('clipboard_uid'))
+    if clipboard_value is None:
       return make_response('', 404)
-    print([vars(clipboard_value) for clipboard_value in clipboard_values])
+    print('clipboard post:', clipboard_value)
 
-    if parser.get('tags') is None:
+    if parser.get('tags') is not None:
       now_tags = ClipboardTagModel.get_by_clipboard_uid(parser.get('clipboard_uid'))
       now_tag_uid_list = [now_tag.uid for now_tag in now_tags]
+      print('clipboard post:', now_tag_uid_list)
 
-      for tag_uid in parser.get('tags'):
+      tags = []
+      if isinstance(parser.get('tags'), list) is False:
+        tags = [parser.get('tags')]
+      else:
+        tags = parser.get('tags')
+
+      for tag_uid in tags:
         if not (tag_uid in now_tag_uid_list):
           ClipboardTagModel.insert(clipboard_uid=parser.get('clipboard_uid'), tag_uid=tag_uid)
+          print('clipboard post:', tag_uid)
 
       for now_tag_uid in now_tag_uid_list:
-        if not (now_tag_uid in parser.get('tags')):
+        if not (now_tag_uid in tags):
           ClipboardTagModel.delete(now_tag_uid)
+          print('clipboard post:', now_tag_uid)
 
     return make_response('', 200)
 
@@ -155,7 +165,7 @@ class Clipboard(Resource):
     clipboard_value = ClipboardModel.get_by_uid(parser.get('clipboard_uid'))
     if clipboard_value is None:
       return make_response('', 404)
-    print(vars(clipboard_value))
+    print('clipboard delete:', vars(clipboard_value))
 
     ClipboardTagModel.delete(parser.get('clipboard_uid'))
     return make_response('', 200)
@@ -177,7 +187,7 @@ class ClipboardCopy(Resource):
     clipboard_value = ClipboardModel.get_by_uid(parser.get('clipboard_uid'))
     if clipboard_value is None:
       return make_response('', 404)
-    print(vars(clipboard_value))
+    print('clipboard_copy post:', vars(clipboard_value))
 
     if clipboard_receiver:
       clipboard_receiver.stop()
