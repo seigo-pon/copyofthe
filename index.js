@@ -1,8 +1,31 @@
-const { app, BrowserWindow, shell, globalShortcut } = require('electron')
+const dotenv = require('dotenv')
+const {
+  app,
+  BrowserWindow,
+  shell,
+  globalShortcut
+} = require('electron')
 const { PythonShell } = require('python-shell')
 const rq = require('request-promise')
+const axios = require('axios')
 
-const mainAddr = 'http://localhost:5000'
+dotenv.config()
+
+const mainAddr = process.env.APP_BASE_URL
+console.log('mainAddr', mainAddr)
+
+const axiosClient = axios.create({
+  baseUrl: mainAddr
+})
+axiosClient.interceptors.request.use((req) => {
+  console.log('request: ', req)
+  return req
+})
+axiosClient.interceptors.response.use((res) => {
+  console.log('response: ', res)
+  return res
+})
+const clipboardApiUrl = 'api/clipboard/receive'
 
 // アプリ作成
 function createWindow () {
@@ -16,7 +39,7 @@ function createWindow () {
   const startUp = () => {
     rq(mainAddr)
       .then((htmString) => {
-        console.log('started')
+        console.log('started app')
 
         // ブラウザ準備
         const mainWindow = new BrowserWindow({
@@ -39,8 +62,18 @@ function createWindow () {
         mainWindow.on('blur', () => {
           app.hide()
         })
+
+        // クリップボード監視起動
+        axiosClient.post(`${mainAddr}/${clipboardApiUrl}`)
+          .then((res) => {
+            console.log('started clipboard')
+          })
+          .catch((err) => {
+            console.log(err)
+          })
       })
       .catch((err) => {
+        // console.log(err)
         startUp()
       })
   }
@@ -57,7 +90,7 @@ app.whenReady()
 app.dock.hide()
 
 // 常駐起動設定
-console.log(process.env.NODE_ENV)
+console.log('build', process.env.NODE_ENV)
 if (process.env.NODE_ENV !== 'development') {
   app.setLoginItemSettings({
     openAtLogin: true,
@@ -84,14 +117,14 @@ app.on('ready', () => {
   })
 })
 
-// アクティブで起動する
+// アクティブで起動
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
   }
 })
 
-// 終了処理
+// ウィンドウ全終了
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
@@ -102,4 +135,16 @@ app.on('window-all-closed', () => {
 app.on('will-quit', () => {
   // ショートカット解除
   globalShortcut.unregisterAll()
+})
+
+// 終了処理
+app.on('quit', () => {
+  // クリップボード監視終了
+  axiosClient.delete(`${mainAddr}/${clipboardApiUrl}`)
+    .then((res) => {
+      console.log('finished clipboard')
+    })
+    .catch((err) => {
+      console.log(err)
+    })
 })
