@@ -102,12 +102,15 @@ class Clipboard(Resource):
       page=parser.get('pages'),
       limit=parser.get('limit')
     )
-    if clipboard_values is None:
+    if clipboard_values is None or clipboard_values[0] is None:
       return make_response('', 400)
-    print('clipboard get:', [vars(clipboard_value) for clipboard_value in clipboard_values])
+    print('clipboard get:', [vars(clipboard_value) for clipboard_value in clipboard_values[0]], clipboard_values[1])
 
     clipboard_schema = ClipboardSchema(many=True)
-    return make_response(jsonify({'clipboard_values': clipboard_schema.dump(clipboard_values)}))
+    return make_response(jsonify({
+      'clipboard_values': clipboard_schema.dump(clipboard_values[0]),
+      'clipboard_total': clipboard_values[1]
+    }))
 
   def post(self):
     class ClipboardTagRequestParser(ApiRequestParser):

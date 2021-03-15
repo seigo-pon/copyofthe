@@ -88,13 +88,13 @@ class ClipboardModel(db.Model):
         ret = ClipboardModel.query.order_by(ClipboardModel.order()).limit(all_page).all()
 
     if ret is None:
-      return []
+      return ([], 0)
 
     page_len = len(ret) / limit
     if page_len < page:
-      return ret
+      return (ret, len(ret))
 
-    return ret[(limit * (page - 1)):((limit * page) - 1)]
+    return (ret[(limit * (page - 1)):((limit * page) - 1)], len(ret))
 
   @staticmethod
   def get_by_uid(uid):

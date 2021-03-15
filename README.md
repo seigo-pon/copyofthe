@@ -16,65 +16,168 @@
 ## API
 
 ### クリップボード監視
-- URL
-  - http://localhost:5000/api/clipboard/receive
-- POST
-  - 開始
-- DELETE
-  - 終了
+- http://localhost:5000/api/clipboard/receive
+
+#### POST
+- 監視開始
+
+##### リクエスト
+- なし
+
+##### レスポンス
+- 成功
+  - ステータスコード
+    - 200
+
+#### DELETE
+- 監視終了
+
+##### リクエスト
+- なし
+
+##### レスポンス
+- 成功
+  - ステータスコード
+    - 200
 
 ### クリップボード情報操作
-- URL
-  - http://localhost:5000/api/clipboard
-- GET
-  - リスト取得
-  - リクエスト
-    - key
-    - tags
-    - page
-    - limit
-- POST
-  - タグ付
-  - リクエスト
-    - clipboard_uid
-    - tags
-- DELETE
-  - 削除
-  - リクエスト
-    - clipboard_uid
+- http://localhost:5000/api/clipboard
 
-#### タグ
-- URL
-  - http://localhost:5000/api/tag
-- GET
-  - リスト取得
-  - リクエスト
-    - key
-- POST
-  - 作成
-  - リクエスト
-    - tag
+#### GET
+- クリップボードデータリスト取得
 
-#### クリップボードコピー
-- URL
-  - http://localhost:5000/api/clipboard/copy
-- POST
-  - クリップボードコピー
-  - リクエスト
-    - clipboard_uid
+##### リクエスト
+- Query
+
+|name|type|detail|
+|--|--|--|
+|key|string|検索キーワード|
+|tags|list|タグIDリスト|
+|page|integer|ページ位置|
+|limit|integer|１ページ最大数|
+
+##### レスポンス
+- 成功
+  - ステータスコード
+    - 200
+  - Body
+    - JSON
+
+#### POST
+- クリップボードデータにタグを紐付け
+
+##### リクエスト
+- Form
+
+|name|type|detail|
+|--|--|--|
+|clipboard_uid|string|クリップボードID|
+|tags|list|タグIDリスト|
+
+##### レスポンス
+- 成功
+  - ステータスコード
+    - 200
+
+#### DELETE
+- クリップボードデータ削除
+
+##### リクエスト
+- Form
+
+|name|type|detail|
+|--|--|--|
+|clipboard_uid|string|クリップボードID|
+
+##### レスポンス
+- 成功
+  - ステータスコード
+    - 200
+
+### タグ
+- http://localhost:5000/api/tag
+
+#### GET
+- タグデータリスト取得
+
+##### リクエスト
+- Query
+
+|name|type|detail|
+|--|--|--|
+|key|string|検索キーワード|
+
+##### レスポンス
+- 成功
+  - ステータスコード
+    - 200
+  - Body
+    - JSON
+
+#### POST
+- タグデータ作成
+
+##### リクエスト
+- Query
+
+|name|type|detail|
+|--|--|--|
+|tag|string|タグ文字列|
+
+##### レスポンス
+- 成功
+  - ステータスコード
+    - 200
+
+### クリップボードコピー
+- http://localhost:5000/api/clipboard/copy
+
+#### POST
+- クリップボードコピー
+
+##### リクエスト
+- Form
+
+|name|type|detail|
+|--|--|--|
+|clipboard_uid|string|クリップボードID|
+
+##### レスポンス
+- 成功
+  - ステータスコード
+    - 200
 
 ## 使い方
 
-### 開発起動
+### 開発環境起動
 
 ```
 $ npm i
 $ cd front
 $ npm i
 $ npm run build
+$ cd ../app
+$ pip install -r requirements.txt
 $ cd ../
 $ npm run dev
 ```
+
+#### バックエンドのみ
+
+```
+$ cd app
+$ pip install -r requirements.txt
+$ python app.py
+```
+
+#### フロントエンドのみ
+
+```
+$ cd front
+$ npm i
+$ npm run dev
+```
+
 ### 本番ビルド
 
 ```
@@ -82,6 +185,8 @@ $ npm i
 $ cd front
 $ npm i
 $ npm run build
+$ cd ../app
+$ pip install -r requirements.txt
 $ cd ../
 $ npm run build
 ```

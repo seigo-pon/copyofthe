@@ -10,7 +10,13 @@
             @update-date="updateFilteredDate"
           />
         </div>
-        <clipboard-item-count :pageLimitCount="pageLimitCount" :clipboardItemCount="clipboardItems.length" />
+        <clipboard-item-count
+          :clipboardItemTotal="clipboardItemTotal"
+          :pageLimitCount="pageLimitCount"
+          :pageNum="pageNum"
+          @prev-page="updatePage"
+          @next-page="updatePage"
+        />
       </div>
     </div>
     <div class="my-4">
@@ -43,7 +49,9 @@ export default {
   data () {
     return {
       pageLimitCount: 20,
+      pageNum: 0,
       clipboardItems: [],
+      clipboardItemTotal: 0,
     }
   },
   mounted () {
@@ -116,6 +124,9 @@ export default {
     },
     addTag (clipboardItemId, tagValue) {
       console.log(clipboardItemId, tagValue)
+    },
+    updatePage (e) {
+      this.pageNum = e
     },
   },
 }

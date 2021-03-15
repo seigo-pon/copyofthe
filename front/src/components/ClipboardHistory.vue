@@ -7,7 +7,13 @@
           :initalDate="getFilteredDate"
           @update-date="updateFilteredDate"
         />
-        <clipboard-item-count :pageLimitCount="pageLimitCount" :clipboardItemCount="clipboardItems.length" />
+        <clipboard-item-count
+          :clipboardItemTotal="clipboardItemTotal"
+          :pageLimitCount="pageLimitCount"
+          :pageNum="pageNum"
+          @prev-page="updatePage"
+          @next-page="updatePage"
+        />
       </div>
     </div>
     <div class="my-4">
@@ -29,6 +35,9 @@
 import ClipboardFilterDate from './ClipboardFilterDate.vue'
 import ClipboardItem from './ClipboardItem.vue'
 import ClipboardItemCount from './ClipboardItemCount.vue'
+import UseCase from '../data/usecase'
+
+const useCase = UseCase()
 
 export default {
   name: 'ClipboardHistory',
@@ -40,30 +49,17 @@ export default {
   data () {
     return {
       pageLimitCount: 20,
+      pageNum: 0,
       clipboardItems: [],
+      clipboardItemTotal: 0,
     }
   },
   mounted () {
-    setTimeout(() => {
-      this.clipboardItems.push({
-        id: '1',
-        updatedAt: this.$moment(),
-        value: 'First Value',
-        tags: [],
-        isFavorite: false,
-        copiedCount: 0,
-      })
-    }, 100)
-    setTimeout(() => {
-      this.clipboardItems.push({
-        id: '2',
-        updatedAt: this.$moment(),
-        value: 'Second Value',
-        tags: [{ id: '1', value: '1 item'}, { id: '2', value: '2 item'}],
-        isFavorite: false,
-        copiedCount: 0,
-      })
-    }, 200)
+    const ret = await useCase.getClipboard(this.pageNum, this.pageLimitCount)
+    if (ret != null) {
+      this.clipboardItems = ret.values
+      this.clipboardItemTotal = ret.toal
+    }
   },
   computed: {
     getFilteredDate () {
@@ -230,6 +226,9 @@ export default {
     //   })
     //   this.addingTagIndexList.splice(index, 1)
     // },
+    updatePage (e) {
+      this.pageNum = e
+    },
   },
 }
 </script>

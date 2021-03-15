@@ -1,4 +1,3 @@
-const dotenv = require('dotenv')
 const {
   app,
   BrowserWindow,
@@ -6,38 +5,44 @@ const {
   globalShortcut
 } = require('electron')
 const { PythonShell } = require('python-shell')
-const rq = require('request-promise')
 const axios = require('axios')
+const AxiosLogger = require('axios-logger')
 
-dotenv.config()
+// 環境変数読み込み
+require('dotenv').config()
 
+// バックエンドアドレス
 const mainAddr = process.env.APP_BASE_URL
 console.log('mainAddr', mainAddr)
 
+// axios初期化
 const axiosClient = axios.create({
-  baseUrl: mainAddr
+  baseURL: mainAddr
 })
-axiosClient.interceptors.request.use((req) => {
-  console.log('request: ', req)
-  return req
-})
-axiosClient.interceptors.response.use((res) => {
-  console.log('response: ', res)
-  return res
-})
-const clipboardApiUrl = 'api/clipboard/receive'
+axiosClient.interceptors.request.use(
+  AxiosLogger.requestLogger,
+  AxiosLogger.errorLogger
+)
+axiosClient.interceptors.response.use(
+  AxiosLogger.responseLogger,
+  AxiosLogger.errorLogger
+)
+
+// api url
+const apiUrl = 'api'
+const clipboardReceiveApiUrl = `${apiUrl}/clipboard/receive`
 
 // アプリ作成
 function createWindow () {
   // Pythonコード実行
   PythonShell.run('./app/app.py', null, (err, result) => {
     if (err) throw err
-    console.log(err)
+    console.log('error', err)
   })
 
   // 起動処理
   const startUp = () => {
-    rq(mainAddr)
+    axiosClient.get('')
       .then((htmString) => {
         console.log('started app')
 
@@ -64,16 +69,16 @@ function createWindow () {
         })
 
         // クリップボード監視起動
-        axiosClient.post(`${mainAddr}/${clipboardApiUrl}`)
+        axiosClient.post(clipboardReceiveApiUrl)
           .then((res) => {
             console.log('started clipboard')
           })
           .catch((err) => {
-            console.log(err)
+            console.log('error', err)
           })
       })
       .catch((err) => {
-        // console.log(err)
+        // 起動するまで繰り返す
         startUp()
       })
   }
@@ -140,11 +145,11 @@ app.on('will-quit', () => {
 // 終了処理
 app.on('quit', () => {
   // クリップボード監視終了
-  axiosClient.delete(`${mainAddr}/${clipboardApiUrl}`)
+  axiosClient.delete(clipboardReceiveApiUrl)
     .then((res) => {
       console.log('finished clipboard')
     })
     .catch((err) => {
-      console.log(err)
+      console.log('error', err)
     })
 })

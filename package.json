@@ -21,13 +21,13 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@vue/cli": "^4.5.8",
+    "axios-logger": "^2.5.0",
     "dotenv": "^8.2.0",
     "electron": "^10.1.5"
   },
   "dependencies": {
     "axios": "^0.21.1",
     "python-shell": "^2.0.2",
-    "request": "^2.88.2",
-    "request-promise": "^4.2.6"
+    "request": "^2.88.2"
   }
 }
