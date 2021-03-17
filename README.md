@@ -63,6 +63,27 @@
   - Body
     - JSON
 
+```
+{
+  "clipboard_total": 1,
+  "clipboard_values": [
+    {
+      "copies": [],
+      "created_at": "2021-03-17T23:55:25.332038",
+      "is_favorite": null,
+      "tags": [
+        {
+          "created_at": "2021-03-17T23:55:48.529708",
+          "tag_uid": "201724299976483296c476ef06d65421"
+        }
+      ],
+      "uid": "97b634f0b8a34047a68bafaad4b5c775",
+      "updated_at": "2021-03-17T23:55:25.332058",
+      "value": "clipboard_total"
+    }
+  ]
+}
+```
 #### POST
 - クリップボードデータにタグを紐付け
 
@@ -73,6 +94,7 @@
 |--|--|--|
 |clipboard_uid|string|クリップボードID|
 |tags|list|タグIDリスト|
+|is_favorite|integer|お気に入り|
 
 ##### レスポンス
 - 成功
@@ -114,6 +136,17 @@
   - Body
     - JSON
 
+```
+{
+  "tags": [
+    {
+      "created_at": "2021-03-17T23:55:19.574835",
+      "uid": "201724299976483296c476ef06d65421",
+      "value": "new_tag"
+    }
+  ]
+}
+```
 #### POST
 - タグデータ作成
 

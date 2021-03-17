@@ -50,7 +50,7 @@ class ClipboardModel(db.Model):
 
   @staticmethod
   def order():
-    return db.desc(ClipboardModel.created_at)
+    return db.desc(ClipboardModel.updated_at)
 
   @staticmethod
   def get_by_query(key, tag_uid_list, page, limit):
@@ -149,6 +149,32 @@ class ClipboardTagModel(db.Model):
   @staticmethod
   def delete(uid):
     model = ClipboardTagModel.query.filter_by(uid=uid).first()
+    if model:
+      db.session.delete(model)
+      db.session.commit()
+
+
+class ClipboardFavoriteModel(db.Model):
+  __tablename__ = 'clipboard_favorite_table'
+
+  uid = db.Column(db.String(100), primary_key=True)
+  clipboard_uid = db.Column(db.Integer, db.ForeignKey('clipboard_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
+  clipboard = db.relationship("ClipboardModel", backref=db.backref("is_favorite", uselist=False))
+  created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+  @staticmethod
+  def get_by_clipboard_uid(clipboard_uid):
+    return ClipboardFavoriteModel.query.filter_by(clipboard_uid=clipboard_uid).first()
+
+  @staticmethod
+  def insert(clipboard_uid):
+    model = ClipboardFavoriteModel(uid=uuid.uuid4().hex, clipboard_uid=clipboard_uid)
+    db.session.add(model)
+    db.session.commit()
+
+  @staticmethod
+  def delete(uid):
+    model = ClipboardFavoriteModel.query.filter_by(uid=uid).first()
     if model:
       db.session.delete(model)
       db.session.commit()

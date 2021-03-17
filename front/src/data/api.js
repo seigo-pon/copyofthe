@@ -1,14 +1,8 @@
 import axios from 'axios'
 import * as AxiosLogger from 'axios-logger'
 
-// バックエンドアドレス
-const baseUrl = process.env.VUE_APP_BASE_URL
-console.log('baseUrl', baseUrl)
-
 // axios初期化
-const axiosClient = axios.create({
-  baseURL: baseUrl
-})
+const axiosClient = axios.create()
 axiosClient.interceptors.request.use(
   AxiosLogger.requestLogger,
   AxiosLogger.errorLogger
@@ -22,7 +16,7 @@ axiosClient.interceptors.response.use(
 const apiUrl = 'api'
 const clipboardApiUrl = `${apiUrl}/clipboard`
 const tagApiUrl = `${apiUrl}/tag`
-const clipboardCopyApiUrl = `${clipboardApiUrl}/copy`
+// const clipboardCopyApiUrl = `${clipboardApiUrl}/copy`
 
 class Api {
   constructor () {
@@ -37,7 +31,8 @@ class Api {
       if (tags != null) {
         params.tags = tags
       }
-      return await axiosClient.get(clipboardApiUrl, {params: params})
+      const response = await axiosClient.get(clipboardApiUrl, {params: params})
+      return response.data
     } catch (err) {
       console.log('error', err)
       return null
@@ -50,8 +45,8 @@ class Api {
       if (key != null) {
         params.key = key
       }
-      const res = await axiosClient.get(tagApiUrl, {params: params})
-      return res.tags
+      const response = await axiosClient.get(tagApiUrl, {params: params})
+      return response.data.tags
     } catch (err) {
       console.log('error', err)
       return null

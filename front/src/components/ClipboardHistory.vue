@@ -37,7 +37,7 @@ import ClipboardItem from './ClipboardItem.vue'
 import ClipboardItemCount from './ClipboardItemCount.vue'
 import UseCase from '../data/usecase'
 
-const useCase = UseCase()
+const useCase = new UseCase()
 
 export default {
   name: 'ClipboardHistory',
@@ -49,17 +49,13 @@ export default {
   data () {
     return {
       pageLimitCount: 20,
-      pageNum: 0,
+      pageNum: 1,
       clipboardItems: [],
       clipboardItemTotal: 0,
     }
   },
   mounted () {
-    const ret = await useCase.getClipboard(this.pageNum, this.pageLimitCount)
-    if (ret != null) {
-      this.clipboardItems = ret.values
-      this.clipboardItemTotal = ret.toal
-    }
+    this.getClipboardItems()
   },
   computed: {
     getFilteredDate () {
@@ -71,6 +67,13 @@ export default {
     },
   },
   methods: {
+    async getClipboardItems () {
+      const ret = await useCase.getClipboard(this.pageNum, this.pageLimitCount)
+      if (ret != null) {
+        this.clipboardItems = ret.values
+        this.clipboardItemTotal = ret.total
+      }
+    },
     updateFilteredDate (date) {
       if (date != null) {
         this.$router.push({ path: this.$route.path, query: {date: date.getTime()} })
@@ -226,8 +229,9 @@ export default {
     //   })
     //   this.addingTagIndexList.splice(index, 1)
     // },
-    updatePage (e) {
+    async updatePage (e) {
       this.pageNum = e
+      this.getClipboardItems()
     },
   },
 }

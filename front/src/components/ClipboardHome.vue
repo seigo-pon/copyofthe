@@ -4,7 +4,7 @@
     <div class="my-4 mx-6">
       <router-view />
     </div>
-    <app-footer class="absolute bottom-0 w-full" />
+    <app-footer class="bottom-0 w-full" />
   </div>
 </template>
 

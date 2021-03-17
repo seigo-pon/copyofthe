@@ -4,7 +4,7 @@ from clipboard.clipboard_receiver import ClipboardReceiver
 from flask import Blueprint, current_app, jsonify, make_response
 from flask_restful import Api, Resource, reqparse, inputs
 from models import (
-  TagModel, ClipboardModel, ClipboardTagModel, ClipboardCopyModel,
+  TagModel, ClipboardModel, ClipboardTagModel, ClipboardFavoriteModel, ClipboardCopyModel,
 )
 from schemas import (
   TagSchema, ClipboardSchema, ClipboardCopySchema
@@ -118,6 +118,7 @@ class Clipboard(Resource):
         super().__init__()
         self.parser.add_argument('clipboard_uid', type=str, location='form')
         self.parser.add_argument('tags', type=str, action='split', location='form')
+        self.parser.add_argument('is_favorite', type=int, action='split', location='form')
 
     parser = ClipboardTagRequestParser()
     parser.parse_args()
@@ -150,6 +151,20 @@ class Clipboard(Resource):
         if not (now_tag_uid in tags):
           ClipboardTagModel.delete(now_tag_uid)
           print('clipboard post:', now_tag_uid)
+
+    if parser.get('is_favorite') is not None:
+      favorite = ClipboardFavoriteModel.get_by_clipboard_uid(parser.get('clipboard_uid'))
+      print('clipboard post:', favorite)
+
+      is_favorite = parser.get('is_favorite')
+      if is_favorite == 1:
+        if favorite is None:
+          ClipboardFavoriteModel.insert(parser.get('clipboard_uid'))
+          print('clipboard post:', is_favorite)
+      else:
+        if favorite is not None:
+          ClipboardFavoriteModel.delete(favorite.uid)
+          print('clipboard post:', is_favorite)
 
     return make_response('', 200)
 

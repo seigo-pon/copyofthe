@@ -1,6 +1,7 @@
 import Api from './api'
+import moment from 'moment'
 
-const api = Api()
+const api = new Api()
 
 class UseCase {
   constructor() {
@@ -14,17 +15,17 @@ class UseCase {
         values: clipboardResult.clipboard_values.map((v1) => {
           return {
             id: v1.uid,
-            updatedAt: this.$moment(v1.updated_at),
+            updatedAt: moment(v1.updated_at),
             value: v1.value,
             tags: v1.tags.map((v2) => {
               return {
                 id: v2.tag_uid,
                 value: tagList.find((v3) => {
-                  return v3.uid === v2.uid
-                })
+                  return v3.uid === v2.tag_uid
+                }).value
               }
             }),
-            isFavorite: false,
+            isFavorite: (v1.is_favorite != null),
             copiedCount: v1.copies.length,
           }
         }),

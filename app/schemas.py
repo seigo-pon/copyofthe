@@ -1,6 +1,6 @@
 from flask_marshmallow import Marshmallow
 from models import (
-  TagModel, ClipboardModel, ClipboardTagModel, ClipboardCopyModel
+  TagModel, ClipboardModel, ClipboardTagModel, ClipboardFavoriteModel, ClipboardCopyModel
 )
 
 ma = Marshmallow()
@@ -20,6 +20,11 @@ class ClipboardTagSchema(ma.SQLAlchemySchema):
     model = ClipboardTagModel
     fields = ('tag_uid', 'created_at')
 
+class ClipboardFavoriteSchema(ma.SQLAlchemySchema):
+  class Meta:
+    model = ClipboardFavoriteModel
+    fields = ('created_at',)
+
 class ClipboardCopySchema(ma.SQLAlchemySchema):
   class Meta:
     model = ClipboardCopyModel
@@ -33,6 +38,7 @@ class ClipboardSchema(ma.SQLAlchemySchema):
   uid = ma.auto_field()
   value = ma.auto_field()
   tags = ma.Nested(ClipboardTagSchema, many=True)
+  is_favorite = ma.Nested(ClipboardFavoriteSchema)
   copies = ma.Nested(ClipboardCopySchema, many=True)
   created_at = ma.auto_field(dump_only=True)
   updated_at = ma.auto_field(dump_only=True)
