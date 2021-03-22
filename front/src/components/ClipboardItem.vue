@@ -24,7 +24,9 @@
     >
       <div class="flex-grow">
         <div class="flex flex-col">
-          <span class="text-lg font-bold truncate">{{ clipboardItem.value }}</span>
+          <div class="table table-fixed w-full">
+            <span class="text-lg font-bold table-cell truncate">{{ clipboardItem.value }}</span>
+          </div>
           <span class="text-xs text-gray-500">{{ getDate(clipboardItem.updatedAt) }}</span>
           <div class="flex pt-2">
             <template v-for="tag in clipboardItem.tags">
@@ -57,6 +59,28 @@
             </button>
           </div>
         </div>
+      </div>
+      <div class="flex-none">
+        <button
+          class="hover:text-gray-400 flex items-center justify-center focus:outline-none focus:shadow-outline text-gray-500 ml-2 mr-2"
+          :class="isFavoriteClipboardItem(clipboardItem)"
+          @click="favorClipboardItem(clipboardItem, $event)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+                class="w-6 h-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+            />
+          </svg>
+        </button>
       </div>
       <div class="flex-none">
         <span class="flex items-center justify-center text-gray-600 text-sm">
@@ -97,7 +121,7 @@ export default {
   },
   methods: {
     getDate (date) {
-      return this.$moment(date).format('YYYY/MM/DD HH:mm:ss')
+      return this.$moment(date).format('YYYY/MM/DD (ddd) HH:mm:ss')
     },
     copyClipboardItem (clipboardItem) {
       console.log(clipboardItem)
@@ -111,6 +135,13 @@ export default {
     addTag (clipboardItem, e) {
       e.stopPropagation()
       this.showModalAddTag = true
+    },
+    isFavoriteClipboardItem (clipboardItem) {
+      return clipboardItem.isFavorite ? 'text-yellow-500' : 'text-gray-500'
+    },
+    favorClipboardItem(clipboardItem, e) {
+      e.stopPropagation()
+      this.$emit('update-favorite', this.clipboardItem.id)
     },
     clickRemoveTagOk () {
       this.$emit('remove-tag', this.clipboardItem.id, this.removingTagId)
