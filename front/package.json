@@ -28,6 +28,7 @@
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.1",
     "vue-moment": "^4.1.0",
     "vue-template-compiler": "^2.6.11",
+    "vue2-transitions": "^0.3.0",
     "vuejs-datepicker": "^1.6.2"
   },
   "eslintConfig": {

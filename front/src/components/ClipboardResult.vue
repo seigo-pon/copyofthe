@@ -25,9 +25,11 @@
           <ClipboardItem
             :key="clipboardItem.id"
             :clipboard-item="clipboardItem"
-            @remove-tag="removeTag"
-            @add-tag="addTag"
-            @update-favorite="updateFavorite"
+            @copy-clipboard="copyClipboard"
+            @remove-clipboard-tag="removeClipboardTag"
+            @add-clipboard-tag="addClipboardTag"
+            @update-favorite-clipboard="updateFavoriteClipboard"
+            @remove-clipboard="removeClipboard"
           />
         </template>
       </ul>
@@ -39,7 +41,7 @@
 import ClipboardFilterDate from './ClipboardFilterDate.vue'
 import ClipboardItem from './ClipboardItem.vue'
 import ClipboardItemCount from './ClipboardItemCount.vue'
-import ClipboardView from '../presentation/clipboardview'
+import View from '../app/view'
 
 export default {
   name: 'ClipboardResult',
@@ -48,14 +50,14 @@ export default {
     ClipboardItem,
     ClipboardItemCount,
   },
-  mixins: [ClipboardView],
+  mixins: [View],
   data () {
     return {
     }
   },
   mounted () {
     const keyword = decodeURI(this.$route.query.keyword)
-    this.fetchClipboardItems(keyword)
+    this.updateClipboardKeyword(keyword)
   },
   computed: {
     getFilteredDate () {
@@ -70,20 +72,19 @@ export default {
     '$route.query' (v1, v2) {
       if (v1.keyword != undefined && v1.keyword != v2.keyword) {
         const keyword = decodeURI(v1.keyword)
-        this.fetchClipboardItems(keyword)
+        this.updateClipboardKeyword(keyword)
       }
     },
   },
   methods: {
-    fetchClipboardItems (keyword) {
-      console.log('fetchClipboardItems', keyword)
-      this.getClipboardItems(keyword)
-    },
     checkClipboardItems () {
       if (this.clipboardItems.length === 0) {
         const path = '/clipboard/notfound'
         if (this.$route.query.date) {
-          this.$router.push({ path: path, query: { date: this.$route.query.date } })
+          this.$router.push({
+            path: path,
+            query: { date: this.$route.query.date }
+          })
             .catch(() => {})
         } else {
           this.$router.push(path)
@@ -93,7 +94,10 @@ export default {
     },
     updateFilteredDate (date) {
       if (date != null) {
-        this.$router.push({ path: this.$route.path, query: {date: date.getTime()} })
+        this.$router.push({
+          path: this.$route.path,
+          query: {date: date.getTime()}
+        })
             .catch(() => {})
       } else {
         this.$router.push({ path: this.$route.path })

@@ -1,5 +1,10 @@
 <template>
   <div class="mb-4">
+    <notification
+      v-model="showNotificationCopySuccess"
+      type="success"
+      message="Successfully copied!"
+    />
     <modal
       v-model="showModalRemoveTag"
       title="Remove this tag?"
@@ -13,14 +18,18 @@
       v-model="showModalAddTag"
       @click-ok="clickAddTagOk"
     />
-    <notification
-      v-model="showNotificationCopySuccess"
-      type="success"
-      message="Successfully copied!"
+    <modal
+      v-model="showModalRemoveClipboardItem"
+      title="Remove this clipboard?"
+      message="This clipboard is removed."
+      leftButton="Cancel"
+      :is-left-button-cancel="true"
+      rightButton="OK"
+      @click-right="clickRemoveClipboardItemOk"
     />
     <li
       class="bg-white border border-gray-100 shadow-sm hover:bg-gray-200 flex justify-between items-center py-3 px-4 cursor-pointer"
-      @click="copyClipboardItem(clipboardItem)"
+      @click="copyClipboardItem()"
     >
       <div class="flex-grow">
         <div class="flex flex-col">
@@ -32,7 +41,7 @@
             <template v-for="tag in clipboardItem.tags">
               <button
                 class="bg-gray-400 hover:bg-gray-600 flex items-center focus:outline-none focus:shadow-outline rounded-full mr-1 py-1 px-3 text-white text-xs font-bold"
-                @click="removeTag(clipboardItem, tag, $event)"
+                @click="removeClipboardItemTag(tag, $event)"
                 :key="tag.id"
               >
                 {{ tag.value }}
@@ -40,7 +49,7 @@
             </template>
             <button
               class="hover:text-gray-400 flex items-center focus:outline-none focus:shadow-outline rounded-full"
-              @click="addTag(clipboardItem, $event)"
+              @click="addClipboardItemTag($event)"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -61,17 +70,22 @@
         </div>
       </div>
       <div class="flex-none">
+        <span class="flex items-center justify-center text-gray-600 text-sm ml-2">
+          {{ clipboardItem.copiedCount }} copied
+        </span>
+      </div>
+      <div class="flex-none">
         <button
-          class="hover:text-gray-400 flex items-center justify-center focus:outline-none focus:shadow-outline text-gray-500 ml-2 mr-2"
+          class="hover:text-gray-400 flex items-center justify-center focus:outline-none focus:shadow-outline text-gray-500 ml-2"
           :class="isFavoriteClipboardItem(clipboardItem)"
-          @click="favorClipboardItem(clipboardItem, $event)"
+          @click="favorClipboardItem($event)"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-                class="w-6 h-6"
+            class="w-6 h-6"
           >
             <path
               stroke-linecap="round"
@@ -83,9 +97,25 @@
         </button>
       </div>
       <div class="flex-none">
-        <span class="flex items-center justify-center text-gray-600 text-sm">
-          {{ clipboardItem.copiedCount }} copied
-        </span>
+        <button
+          class="hover:text-gray-400 flex items-center justify-center focus:outline-none focus:shadow-outline text-gray-500 ml-4"
+          @click="removeClipboardItem($event)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            class="w-6 h-6"
+            >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
       </div>
     </li>
   </div>
@@ -105,10 +135,11 @@ export default {
   },
   data () {
     return {
+      showNotificationCopySuccess: false,
       removingTagId: null,
       showModalRemoveTag: false,
-      showNotificationCopySuccess: false,
       showModalAddTag: false,
+      showModalRemoveClipboardItem: false,
     }
   },
   props: {
@@ -123,33 +154,41 @@ export default {
     getDate (date) {
       return this.$moment(date).format('YYYY/MM/DD (ddd) HH:mm:ss')
     },
-    copyClipboardItem (clipboardItem) {
-      console.log(clipboardItem)
+    copyClipboardItem () {
       this.showNotificationCopySuccess = true
+      this.$emit('copy-clipboard', this.clipboardItem)
     },
-    removeTag (clipboardItem, tag, e) {
+    removeClipboardItemTag (tag, e) {
       e.stopPropagation()
       this.removingTagId = tag.id
       this.showModalRemoveTag = true
     },
-    addTag (clipboardItem, e) {
+    addClipboardItemTag (e) {
       e.stopPropagation()
       this.showModalAddTag = true
     },
     isFavoriteClipboardItem (clipboardItem) {
       return clipboardItem.isFavorite ? 'text-yellow-500' : 'text-gray-500'
     },
-    favorClipboardItem(clipboardItem, e) {
+    favorClipboardItem(e) {
       e.stopPropagation()
-      this.$emit('update-favorite', this.clipboardItem.id)
+      this.$emit('update-favorite-clipboard', this.clipboardItem)
+    },
+    removeClipboardItem (e) {
+      e.stopPropagation()
+      this.showModalRemoveClipboardItem = true
     },
     clickRemoveTagOk () {
-      this.$emit('remove-tag', this.clipboardItem.id, this.removingTagId)
+      this.$emit('remove-clipboard-tag', this.clipboardItem, this.removingTagId)
       this.showModalRemoveTag = false
     },
     clickAddTagOk (tagValue) {
-      this.$emit('add-tag', this.clipboardItem.id, tagValue)
+      this.$emit('add-clipboard-tag', this.clipboardItem, tagValue)
       this.showModalAddTag = false
+    },
+    clickRemoveClipboardItemOk () {
+      this.$emit('remove-clipboard', this.clipboardItem)
+      this.showModalRemoveClipboardItem = false
     },
   },
 }

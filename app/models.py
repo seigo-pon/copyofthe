@@ -30,6 +30,10 @@ class TagModel(db.Model):
     return TagModel.query.filter_by(value=value).order_by(TagModel.order()).all()
 
   @staticmethod
+  def get_by_uid(uid):
+    return TagModel.query.filter_by(uid=uid).order_by(TagModel.order()).first()
+
+  @staticmethod
   def get_by_uid_list(uid_list):
     return TagModel.query.filter(TagModel.uid.in_(uid_list)).order_by(TagModel.order()).all()
 
@@ -38,6 +42,13 @@ class TagModel(db.Model):
     model = TagModel(uid=uuid.uuid4().hex, value=value)
     db.session.add(model)
     db.session.commit()
+
+  @staticmethod
+  def delete(uid):
+    model = TagModel.query.filter_by(uid=uid).first()
+    if model:
+      db.session.delete(model)
+      db.session.commit()
 
 
 class ClipboardModel(db.Model):

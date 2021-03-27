@@ -82,6 +82,35 @@ class Tag(Resource):
     TagModel.insert(parser.get('tag'))
     return make_response('', 201)
 
+  def delete(self):
+    class TagRequestParser(ApiRequestParser):
+      def __init__(self):
+        super().__init__()
+        self.parser.add_argument('tag_uid', type=str, location='args')
+
+    parser = TagRequestParser()
+    parser.parse_args()
+
+    if parser.get('tag_uid') is None:
+      return make_response('', 400)
+
+    tag = TagModel.get_by_uid(parser.get('tag_uid'))
+    if tag is None:
+      return make_response('', 404)
+
+    clipboard_values = ClipboardModel.get_by_query(
+      key=None,
+      tag_uid_list=parser.get('tags'),
+      page=None,
+      limit=1
+    )
+    if clipboard_values is not None:
+      return make_response('', 409)
+    print('tag delete:', vars(tag))
+
+    TagModel.delete(parser.get('tag_uid'))
+    return make_response('', 201)
+
 
 class Clipboard(Resource):
   def get(self):
@@ -141,7 +170,8 @@ class Clipboard(Resource):
         tags = [parser.get('tags')]
       else:
         tags = parser.get('tags')
-
+      tags = list(filter(lambda x: x != '', tags))
+      
       for tag_uid in tags:
         if not (tag_uid in now_tag_uid_list):
           ClipboardTagModel.insert(clipboard_uid=parser.get('clipboard_uid'), tag_uid=tag_uid)
@@ -172,7 +202,7 @@ class Clipboard(Resource):
     class ClipboardRequestParser(ApiRequestParser):
       def __init__(self):
         super().__init__()
-        self.parser.add_argument('clipboard_uid', type=str, location='form')
+        self.parser.add_argument('clipboard_uid', type=str, location='args')
 
     parser = ClipboardRequestParser()
     parser.parse_args()
@@ -185,7 +215,7 @@ class Clipboard(Resource):
       return make_response('', 404)
     print('clipboard delete:', vars(clipboard_value))
 
-    ClipboardTagModel.delete(parser.get('clipboard_uid'))
+    ClipboardModel.delete(parser.get('clipboard_uid'))
     return make_response('', 200)
 
 

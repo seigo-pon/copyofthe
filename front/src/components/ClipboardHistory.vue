@@ -22,9 +22,11 @@
           <ClipboardItem
             :key="clipboardItem.id"
             :clipboard-item="clipboardItem"
-            @remove-tag="removeTag"
-            @add-tag="addTag"
-            @update-favorite="updateFavorite"
+            @copy-clipboard="copyClipboard"
+            @remove-clipboard-tag="removeClipboardTag"
+            @add-clipboard-tag="addClipboardTag"
+            @update-favorite-clipboard="updateFavoriteClipboard"
+            @remove-clipboard="removeClipboard"
           />
         </template>
       </ul>
@@ -36,7 +38,7 @@
 import ClipboardFilterDate from './ClipboardFilterDate.vue'
 import ClipboardItem from './ClipboardItem.vue'
 import ClipboardItemCount from './ClipboardItemCount.vue'
-import ClipboardView from '../presentation/clipboardview'
+import View from '../app/view'
 
 export default {
   name: 'ClipboardHistory',
@@ -45,13 +47,13 @@ export default {
     ClipboardItem,
     ClipboardItemCount,
   },
-  mixins: [ClipboardView],
+  mixins: [View],
   data () {
     return {
     }
   },
   mounted () {
-    this.getClipboardItems()
+    this.updateClipboardKeyword(null)
   },
   computed: {
     getFilteredDate () {

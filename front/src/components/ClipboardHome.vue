@@ -34,7 +34,9 @@ export default {
           if (this.$route.query.date) {
             this.$router.push({
               path: path,
-              query: { date: this.$route.query.date }
+              query: {
+                date: this.$route.query.date
+              }
             })
               .catch(() => {})
           } else {
@@ -46,11 +48,17 @@ export default {
           if (this.$route.query.date) {
             this.$router.push({
               path: path,
-              query: { keyword: encodeURI(v1), date: this.$route.query.date }
+              query: {
+                keyword: encodeURI(v1),
+                date: this.$route.query.date
+              }
             })
               .catch(() => {})
           } else {
-            this.$router.push({ path: path, query: { keyword: encodeURI(v1) } })
+            this.$router.push({
+              path: path,
+              query: { keyword: encodeURI(v1) }
+            })
               .catch(() => {})
           }
         }
