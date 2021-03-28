@@ -22,15 +22,19 @@ class Repository {
   constructor () {
   }
 
-  async getClipboard (page, limit, key, tags) {
+  async getClipboard (page, limit, key, date, tags) {
     try {
       let params = { page: page, limit: limit }
       if (key != null) {
         params.key = key
       }
+      if (date != null) {
+        params.date = date
+      }
       if (tags != null) {
         params.tags = tags
       }
+      console.log('getClipboard', params)
 
       const response = await axiosClient.get(clipboardApiUrl, { params: params })
       return response.data

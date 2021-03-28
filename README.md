@@ -52,6 +52,7 @@
 |name|type|detail|
 |--|--|--|
 |key|string|検索キーワード|
+|date|integer|フィルタする日付のUNIXTIME|
 |tags|list|タグIDリスト|
 |page|integer|ページ位置|
 |limit|integer|１ページ最大数|

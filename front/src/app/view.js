@@ -6,42 +6,62 @@ const useCase = new UseCase(new Repository())
 export default {
   data () {
     return {
+      pageId: null,
       pageLimitCount: 20,
       pageNum: 1,
       clipboardItems: [],
       clipboardItemTotal: 0,
       keyword: null,
-      tagList: [],
+      filteredDate: null,
+      lastTags: [],
     }
+  },
+  created () {
+    this.pageId = (new Date()).getTime()
   },
   methods: {
     async getClipboardItems () {
-      const clipboardList = await useCase.getClipboard(this.pageNum, this.pageLimitCount, this.keyword)
-      if (clipboardList != null) {
-        this.clipboardItems = clipboardList.values
-        this.clipboardItemTotal = clipboardList.total
+      const pageId = this.pageId
+
+      const clipboardItems = await useCase.getClipboardItems(
+        this.pageNum,
+        this.pageLimitCount,
+        this.keyword,
+        (this.filteredDate / 1000)  // msec -> sec
+      )
+
+      if (this.pageId != pageId) {
+        console.log('getClipboardItems: no need request')
+        return
+      }
+
+      if (clipboardItems != null) {
+        this.clipboardItems = clipboardItems.values
+        this.clipboardItemTotal = clipboardItems.total
       } else {
         this.clipboardItems = []
         this.clipboardItemTotal = 0
       }
     },
-    async updateClipboardKeyword (keyword) {
+    async updateClipboardItems (keyword, date) {
+      console.log('updateClipboardItems', keyword, date)
       this.keyword = keyword
+      this.filteredDate = date ? date.getTime() : null
       // update
       await this.getClipboardItems()
     },
-    async copyClipboard (clipboardItemId) {
-      console.log('copyClipboard', clipboardItemId)
-      await useCase.copyClipboard(clipboardItemId)
+    async copyClipboardItem (clipboardItem) {
+      console.log('copyClipboard', clipboardItem)
+      await useCase.copyClipboardItem(clipboardItem)
       // update
       await this.getClipboardItems()
     },
-    async getTagList () {
-      const tagList = await useCase.getTagList()
-      if (tagList != null) {
-        this.tagList = tagList
+    async getLastTags () {
+      const lastTags = await useCase.getLastTags()
+      if (lastTags != null) {
+        this.lastTags = lastTags
       } else {
-        this.tagList = []
+        this.lastTags = []
       }
     },
     async removeClipboardTag (clipboardItem, tagId) {
@@ -59,6 +79,7 @@ export default {
     async updateFavoriteClipboard (clipboardItem) {
       console.log('updateFavoriteClipboard', clipboardItem)
       await useCase.updateFavoriteClipboard(clipboardItem, !clipboardItem.isFavorite)
+      // update
       await this.getClipboardItems()
     },
     async removeClipboard (clipboardItem) {

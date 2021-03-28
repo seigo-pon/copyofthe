@@ -6,7 +6,7 @@
           <span class="px-4 text-gray-700 text-xl">Searched result</span>
           <ClipboardFilterDate
             placeholderText="All Days"
-            :initalDate="getFilteredDate"
+            :initalDate="getFilteredDate($route.query.date)"
             @update-date="updateFilteredDate"
           />
         </div>
@@ -25,7 +25,7 @@
           <ClipboardItem
             :key="clipboardItem.id"
             :clipboard-item="clipboardItem"
-            @copy-clipboard="copyClipboard"
+            @copy-clipboard="copyClipboardItem"
             @remove-clipboard-tag="removeClipboardTag"
             @add-clipboard-tag="addClipboardTag"
             @update-favorite-clipboard="updateFavoriteClipboard"
@@ -38,10 +38,11 @@
 </template>
 
 <script>
+import ClipboardTable from './clipboardtable'
+import View from '../app/view'
 import ClipboardFilterDate from './ClipboardFilterDate.vue'
 import ClipboardItem from './ClipboardItem.vue'
 import ClipboardItemCount from './ClipboardItemCount.vue'
-import View from '../app/view'
 
 export default {
   name: 'ClipboardResult',
@@ -50,33 +51,40 @@ export default {
     ClipboardItem,
     ClipboardItemCount,
   },
-  mixins: [View],
+  mixins: [View, ClipboardTable],
   data () {
     return {
     }
   },
   mounted () {
-    const keyword = decodeURI(this.$route.query.keyword)
-    this.updateClipboardKeyword(keyword)
-  },
-  computed: {
-    getFilteredDate () {
-      if (this.$route.query.date) {
-        return new Date(Number(this.$route.query.date))
-      } else {
-        return null
-      }
-    },
+    this.updateClipboardItems(
+      this.getKeyword(this.$route.query.keyword),
+      this.getFilteredDate(this.$route.query.date)
+    )
   },
   watch: {
     '$route.query' (v1, v2) {
-      if (v1.keyword != undefined && v1.keyword != v2.keyword) {
-        const keyword = decodeURI(v1.keyword)
-        this.updateClipboardKeyword(keyword)
+      let keyword = this.keyword
+      if (v1.keyword != v2.keyword) {
+        keyword = this.getKeyword(v1.keyword != null ? v1.keyword : null)
+      }
+      let filteredDate = this.filteredDate
+      if (v1.date != undefined && v1.date != v2.date) {
+        filteredDate = this.getFilteredDate(v1.date != null ? v1.date : null)
+      }
+      if (keyword != this.keyword || filteredDate != this.filteredDate) {
+        this.updateClipboardItems(keyword, filteredDate)
       }
     },
   },
   methods: {
+    getKeyword (keyword) {
+      if (keyword != null) {
+        return decodeURI(keyword)
+      } else {
+        return null
+      }
+    },
     checkClipboardItems () {
       if (this.clipboardItems.length === 0) {
         const path = '/clipboard/notfound'
@@ -90,18 +98,6 @@ export default {
           this.$router.push(path)
             .catch(() => {})
         }
-      }
-    },
-    updateFilteredDate (date) {
-      if (date != null) {
-        this.$router.push({
-          path: this.$route.path,
-          query: {date: date.getTime()}
-        })
-            .catch(() => {})
-      } else {
-        this.$router.push({ path: this.$route.path })
-            .catch(() => {})
       }
     },
   },

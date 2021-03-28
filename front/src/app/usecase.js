@@ -5,10 +5,10 @@ class UseCase {
     this.repository = repository
   }
 
-  async getClipboard (page, limit, key, tags) {
+  async getClipboardItems (page, limit, key, date, tags) {
     try {
-      const tagList = await this.repository.getTag()
-      const clipboardResult = await this.repository.getClipboard(page, limit, key, tags)
+      const lastTags = await this.repository.getTag()
+      const clipboardResult = await this.repository.getClipboard(page, limit, key, date, tags)
       return {
         values: clipboardResult.clipboard_values.map((v1) => {
           return {
@@ -18,7 +18,7 @@ class UseCase {
             tags: v1.tags.map((v2) => {
               return {
                 id: v2.tag_uid,
-                value: tagList.find((v3) => {
+                value: lastTags.find((v3) => {
                   return v3.uid === v2.tag_uid
                 }).value
               }
@@ -35,7 +35,7 @@ class UseCase {
     }
   }
 
-  async copyClipboard (clipboardItem) {
+  async copyClipboardItem (clipboardItem) {
     try {
       await this.repository.copyClipboard(clipboardItem.id)
     } catch (err) {
@@ -43,10 +43,10 @@ class UseCase {
     }
   }
 
-  async getTagList () {
+  async getLastTags () {
     try {
-      const tagList = await this.repository.getTag()
-      return tagList.map((v) => {
+      const lastTags = await this.repository.getTag()
+      return lastTags.map((v) => {
           return {
             id: v.id,
             value: v.value
@@ -74,14 +74,14 @@ class UseCase {
 
   async addClipboardTag (clipboardItem, tagValue) {
     try {
-      let tagList = await this.repository.getTag()
-      let tag = tagList.find((v) => {
+      let lastTags = await this.repository.getTag()
+      let tag = lastTags.find((v) => {
         return v.value === tagValue
       })
       if (tag == null) {
         await this.repository.addTag(tagValue)
-        tagList = await this.repository.getTag()
-        tag = tagList.find((v) => {
+        lastTags = await this.repository.getTag()
+        tag = lastTags.find((v) => {
           return v.value === tagValue
         })
         if (tag == null) {

@@ -21,7 +21,7 @@ class ApiRequestParser:
 
   def parse_args(self):
     self.args = self.parser.parse_args()
-    print('args:', vars(self.args))
+    print('args:', self.args)
 
   def get(self, key):
     return self.args.get(key)
@@ -66,7 +66,7 @@ class Tag(Resource):
     class TagRequestParser(ApiRequestParser):
       def __init__(self):
         super().__init__()
-        self.parser.add_argument('tag', type=str, location='form')
+        self.parser.add_argument('tag', type=str, location='form', required=True)
 
     parser = TagRequestParser()
     parser.parse_args()
@@ -100,7 +100,8 @@ class Tag(Resource):
 
     clipboard_values = ClipboardModel.get_by_query(
       key=None,
-      tag_uid_list=parser.get('tags'),
+      date=None,
+      tag_uids=parser.get('tags'),
       page=None,
       limit=1
     )
@@ -118,6 +119,7 @@ class Clipboard(Resource):
       def __init__(self):
         super().__init__()
         self.parser.add_argument('key', type=str, location='args')
+        self.parser.add_argument('date', type=int, location='args')
         self.parser.add_argument('tags', type=str, action='append', location='args')
         self.parser.add_argument('page', type=int, location='args')
         self.parser.add_argument('limit', type=int, location='args')
@@ -127,13 +129,14 @@ class Clipboard(Resource):
 
     clipboard_values = ClipboardModel.get_by_query(
       key=parser.get('key'),
-      tag_uid_list=parser.get('tags'),
+      date=parser.get('date'),
+      tag_uids=parser.get('tags'),
       page=parser.get('pages'),
       limit=parser.get('limit')
     )
     if clipboard_values is None or clipboard_values[0] is None:
       return make_response('', 400)
-    print('clipboard get:', [vars(clipboard_value) for clipboard_value in clipboard_values[0]], clipboard_values[1])
+    print('clipboard get:', len(clipboard_values[0]), clipboard_values[1])
 
     clipboard_schema = ClipboardSchema(many=True)
     return make_response(jsonify({
@@ -145,7 +148,7 @@ class Clipboard(Resource):
     class ClipboardTagRequestParser(ApiRequestParser):
       def __init__(self):
         super().__init__()
-        self.parser.add_argument('clipboard_uid', type=str, location='form')
+        self.parser.add_argument('clipboard_uid', type=str, location='form', required=True)
         self.parser.add_argument('tags', type=str, action='split', location='form')
         self.parser.add_argument('is_favorite', type=int, action='split', location='form')
 
@@ -162,8 +165,8 @@ class Clipboard(Resource):
 
     if parser.get('tags') is not None:
       now_tags = ClipboardTagModel.get_by_clipboard_uid(parser.get('clipboard_uid'))
-      now_tag_uid_list = [now_tag.uid for now_tag in now_tags]
-      print('clipboard post:', now_tag_uid_list)
+      now_tag_uids = [now_tag.uid for now_tag in now_tags]
+      print('clipboard post:', now_tag_uids)
 
       tags = []
       if isinstance(parser.get('tags'), list) is False:
@@ -173,11 +176,11 @@ class Clipboard(Resource):
       tags = list(filter(lambda x: x != '', tags))
       
       for tag_uid in tags:
-        if not (tag_uid in now_tag_uid_list):
+        if not (tag_uid in now_tag_uids):
           ClipboardTagModel.insert(clipboard_uid=parser.get('clipboard_uid'), tag_uid=tag_uid)
           print('clipboard post:', tag_uid)
 
-      for now_tag_uid in now_tag_uid_list:
+      for now_tag_uid in now_tag_uids:
         if not (now_tag_uid in tags):
           ClipboardTagModel.delete(now_tag_uid)
           print('clipboard post:', now_tag_uid)
@@ -202,7 +205,7 @@ class Clipboard(Resource):
     class ClipboardRequestParser(ApiRequestParser):
       def __init__(self):
         super().__init__()
-        self.parser.add_argument('clipboard_uid', type=str, location='args')
+        self.parser.add_argument('clipboard_uid', type=str, location='args', required=True)
 
     parser = ClipboardRequestParser()
     parser.parse_args()
@@ -224,7 +227,7 @@ class ClipboardCopy(Resource):
     class ClipboardRequestParser(ApiRequestParser):
       def __init__(self):
         super().__init__()
-        self.parser.add_argument('clipboard_uid', type=str, location='form')
+        self.parser.add_argument('clipboard_uid', type=str, location='form', required=True)
 
     parser = ClipboardRequestParser()
     parser.parse_args()

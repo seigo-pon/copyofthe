@@ -1,11 +1,18 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
 
 db = SQLAlchemy()
 
+
+def get_start_of_day(date):
+  return date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+def get_end_of_day(date):
+  start = get_start_of_day(date)
+  return start + timedelta(hours=24)
 
 class TagModel(db.Model):
   __tablename__ = 'tag_table'
@@ -34,8 +41,8 @@ class TagModel(db.Model):
     return TagModel.query.filter_by(uid=uid).order_by(TagModel.order()).first()
 
   @staticmethod
-  def get_by_uid_list(uid_list):
-    return TagModel.query.filter(TagModel.uid.in_(uid_list)).order_by(TagModel.order()).all()
+  def get_by_uids(uids):
+    return TagModel.query.filter(TagModel.uid.in_(uids)).order_by(TagModel.order()).all()
 
   @staticmethod
   def insert(value):
@@ -64,39 +71,34 @@ class ClipboardModel(db.Model):
     return db.desc(ClipboardModel.updated_at)
 
   @staticmethod
-  def get_by_query(key, tag_uid_list, page, limit):
+  def get_by_query(key, date, tag_uids, page, limit):
     if page is None:
       page = 1
     if limit is None:
       limit = 100
     all_page = (limit if limit > 1 else 1) * (page if page > 0 else 1)
 
-    clipboard_tag_list = []
-    if tag_uid_list:
-      clipboard_tag_list = ClipboardTagModel.get_by_tag(tag_uid_list)
+    filtered_date = None
+    if date:
+      filtered_date = datetime.fromtimestamp(date)
 
-    uid_list = []
-    if clipboard_tag_list and len(clipboard_tag_list) > 0:
-      uid_list = [clipboard_tag.clipboard_uid for clipboard_tag in clipboard_tag_list]
+    clipboard_tags = []
+    if tag_uids:
+      clipboard_tags = ClipboardTagModel.get_by_tag(tag_uids)
 
-    ret = None
-    if len(uid_list) > 0:
-      if key:
-        ret = ClipboardModel.query.filter(
-          ClipboardModel.uid.in_(uid_list),
-          ClipboardModel.value.like(f'%{key}%'),
-        ).order_by(ClipboardModel.order()).limit(all_page).all()
-      else:
-        ret = ClipboardModel.query.filter(
-          ClipboardModel.uid.in_(uid_list),
-        ).order_by(ClipboardModel.order()).limit(all_page).all()
-    else:
-      if key:
-        ret = ClipboardModel.query.filter(
-          ClipboardModel.value.like(f'%{key}%'),
-        ).order_by(ClipboardModel.order()).limit(all_page).all()
-      else:
-        ret = ClipboardModel.query.order_by(ClipboardModel.order()).limit(all_page).all()
+    uids = []
+    if clipboard_tags and len(clipboard_tags) > 0:
+      uids = [clipboard_tag.clipboard_uid for clipboard_tag in clipboard_tags]
+
+    ret = ClipboardModel.query.filter(
+      ClipboardModel.uid.in_(uids) if len(uids) > 0 else True
+    ).filter(
+      ClipboardModel.value.like(f'%{key}%') if key else True
+    ).filter(
+      ClipboardModel.updated_at >= get_start_of_day(filtered_date) if filtered_date else True
+    ).filter(
+      ClipboardModel.updated_at <= get_end_of_day(filtered_date) if filtered_date else True
+    ).order_by(ClipboardModel.order()).limit(all_page).all()
 
     if ret is None:
       return ([], 0)
@@ -139,11 +141,10 @@ class ClipboardTagModel(db.Model):
   created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
   @staticmethod
-  def get_by_tag(tag_uid_list):
-    tags = TagModel.get_by_uid_list(tag_uid_list)
+  def get_by_tag(tag_uids):
+    tags = TagModel.get_by_uids(tag_uids)
     if tags and len(tags) > 0:
-      tag_uid_list = [tag.uid for tag in tags]
-      return ClipboardTagModel.query.filter(ClipboardTagModel.tag_uid.in_(tag_uid_list)).order_by(ClipboardTagModel.clipboard_uid).all()
+      return ClipboardTagModel.query.filter(ClipboardTagModel.tag_uid.in_(tag_uids)).order_by(ClipboardTagModel.clipboard_uid).all()
     else:
       return None
 

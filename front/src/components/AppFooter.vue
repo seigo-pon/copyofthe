@@ -25,7 +25,7 @@ export default {
   },
   data () {
     return {
-      firstYear: 2020,
+      firstYear: process.env.VUE_APP_RELEASE_YEAR,
       githubImage: GithubImage,
     }
   },

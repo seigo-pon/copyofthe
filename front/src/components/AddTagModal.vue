@@ -21,7 +21,7 @@
               autocomplete="off"
             />
             <button
-              v-if="tagList.length > 0"
+              v-if="lastTags.length > 0"
               class="hover:text-gray-400 flex items-center focus:outline-none focus:shadow-outline rounded-full"
               @click="showLastTag = !showLastTag"
             >
@@ -60,13 +60,13 @@
             </button>
           </div>
           <div v-if="showLastTag" class="absolute overflow-y-auto shadow z-40 w-full mt-2 last-tag">
-            <template v-for="(tag, index) in tagList">
+            <template v-for="(lastTag, index) in lastTags">
               <li
                 :key="index"
                 class="bg-white hover:bg-gray-200 py-2 px-2 cursor-pointer"
-                @click="clickLastTag(tag)"
+                @click="clickLastTag(lastTag)"
               >
-                <span>{{ tag.value }}</span>
+                <span>{{ lastTag.value }}</span>
               </li>
             </template>
           </div>
@@ -115,7 +115,7 @@ export default {
     },
   },
   async mounted () {
-    await this.getTagList()
+    await this.getLastTags()
   },
   watch: {
     show (v1, v2) {
