@@ -1,22 +1,25 @@
 <template>
   <div class="relative bg-white min-h-screen">
-    <clipboard-header v-model="keyword" />
-    <div class="my-4 mx-6">
+    <clipboard-header
+      v-model="keyword"
+      class="fixed top-0 left-0 w-full z-10"
+    />
+    <div class="mt-28 mb-8 mx-6">
       <router-view />
     </div>
-    <app-footer class="bottom-0 w-full" />
+    <!-- <app-footer class="bottom-0 w-full" /> -->
   </div>
 </template>
 
 <script>
-import AppFooter from './AppFooter.vue'
+// import AppFooter from './AppFooter.vue'
 import ClipboardHeader from './ClipboardHeader.vue'
 
 export default {
   name: 'Clipboard',
   components: {
     ClipboardHeader,
-    AppFooter,
+    // AppFooter,
   },
   data () {
     return {
@@ -31,13 +34,14 @@ export default {
       if (v1 != v2) {
         if (v1 === '') {
           const path = '/'
+
+          let query = {}
           if (this.$route.query.date) {
-            this.$router.push({
-              path: path,
-              query: {
-                date: this.$route.query.date
-              }
-            })
+            query = Object.assign(query, { date: this.$route.query.date })
+          }
+
+          if (Object.keys(query).length != 0) {
+            this.$router.push({ path: path, query: query })
               .catch(() => {})
           } else {
             this.$router.push({ path: path })
@@ -45,22 +49,14 @@ export default {
           }
         } else {
           const path = '/clipboard'
+
+          let query = { keyword: encodeURI(v1) }
           if (this.$route.query.date) {
-            this.$router.push({
-              path: path,
-              query: {
-                keyword: encodeURI(v1),
-                date: this.$route.query.date
-              }
-            })
-              .catch(() => {})
-          } else {
-            this.$router.push({
-              path: path,
-              query: { keyword: encodeURI(v1) }
-            })
-              .catch(() => {})
+            query = Object.assign(query, { date: this.$route.query.date })
           }
+
+          this.$router.push({ path: path, query: query })
+            .catch(() => {})
         }
       }
     },

@@ -66,14 +66,14 @@ export default {
     '$route.query' (v1, v2) {
       let keyword = this.keyword
       if (v1.keyword != v2.keyword) {
-        keyword = this.getKeyword(v1.keyword != null ? v1.keyword : null)
+        keyword = this.getKeyword(v1.keyword || null)
       }
       let filteredDate = this.filteredDate
-      if (v1.date != undefined && v1.date != v2.date) {
-        filteredDate = this.getFilteredDate(v1.date != null ? v1.date : null)
+      if (v1.date != v2.date) {
+        filteredDate = (v1.date != null && v1.date != 0) ? v1.date : null
       }
       if (keyword != this.keyword || filteredDate != this.filteredDate) {
-        this.updateClipboardItems(keyword, filteredDate)
+        this.updateClipboardItems(keyword, this.getFilteredDate(filteredDate))
       }
     },
   },
@@ -88,11 +88,17 @@ export default {
     checkClipboardItems () {
       if (this.clipboardItems.length === 0) {
         const path = '/clipboard/notfound'
+
+        let query = {}
+        if (this.$route.query.keyword) {
+          query = Object.assign(query, { keyword: this.$route.query.keyword })
+        }
         if (this.$route.query.date) {
-          this.$router.push({
-            path: path,
-            query: { date: this.$route.query.date }
-          })
+          query = Object.assign(query, { date: this.$route.query.date })
+        }
+        
+        if (Object.keys(query).length != 0) {
+          this.$router.push({ path: path, query: query })
             .catch(() => {})
         } else {
           this.$router.push(path)

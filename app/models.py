@@ -118,10 +118,22 @@ class ClipboardModel(db.Model):
     return ClipboardModel.query.order_by(ClipboardModel.order()).first()
 
   @staticmethod
+  def get_by_value(value):
+    return ClipboardModel.query.filter_by(value=value).order_by(ClipboardModel.order()).first()
+
+  @staticmethod
   def insert(value):
     model = ClipboardModel(uid=uuid.uuid4().hex, value=value)
     db.session.add(model)
     db.session.commit()
+
+  @staticmethod
+  def update(uid, value):
+    model = ClipboardModel.query.filter_by(uid=uid).first()
+    if model:
+      model.value = value
+      model.created_at = datetime.now()
+      db.session.commit()
 
   @staticmethod
   def delete(uid):

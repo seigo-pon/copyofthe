@@ -1,6 +1,6 @@
 <template>
   <slide-x-right-transition>
-    <div v-show="show" class="fixed top-8 right-4">
+    <div v-show="show" class="fixed top-24 right-4 z-20">
       <div class="bg-white rounded border border-gray-200 shadow-md p-2">
         <div class="flex flex-row">
           <div class="px-2">

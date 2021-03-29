@@ -1,6 +1,6 @@
 <template>
   <footer class="bg-white text-right">
-    <div class="mx-6 border-b-2"></div>
+    <div class="mx-4 border-b-2"></div>
     <div class="flex justify-between items-center w-full py-2 px-4">
       <div class="flex-grow py-2 pl-2 text-sm">
         <span class="flex-auto pr-2">&copy; {{ getCopyrightYear }}</span>

@@ -3,7 +3,7 @@
     <button
       v-if="pageNum !== 1"
       class="focus:outline-none pr-2"
-      @click="goPrev"
+      @click="goPrevious"
     >
       <i>
         <svg
@@ -88,7 +88,7 @@ export default {
     },
   },
   methods: {
-    goPrev () {
+    goPrevious () {
       this.$$emit('prev-page', this.pageNum - 1)
     },
     goNext () {

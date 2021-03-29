@@ -1,6 +1,7 @@
 {
   "name": "copyofthe",
   "version": "1.0.0",
+  "private": "true",
   "description": "This is an electron app for the clipboard log.",
   "main": "index.js",
   "scripts": {
@@ -17,7 +18,7 @@
       "output": "docs"
     }
   },
-  "author": "seigo-pon",
+  "author": "seigo-pon <s15upon@Gmail.com>",
   "license": "Apache-2.0",
   "devDependencies": {
     "@vue/cli": "^4.5.8",

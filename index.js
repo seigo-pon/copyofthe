@@ -1,9 +1,14 @@
 const {
   app,
   BrowserWindow,
+  Tray,
+  Menu,
+  nativeTheme,
+  nativeImage,
   shell,
   globalShortcut
 } = require('electron')
+const path = require('path')
 const { PythonShell } = require('python-shell')
 const axios = require('axios')
 const AxiosLogger = require('axios-logger')
@@ -14,6 +19,12 @@ require('dotenv').config()
 // バックエンドアドレス
 const mainAddr = process.env.APP_BASE_URL
 console.log('mainAddr', mainAddr)
+
+// 初期ショートカットキー
+const shortcutKey = process.env.APP_SHORTCUT_KEY
+
+// トレイアイコン
+let trayIcon = null;
 
 // axios初期化
 const axiosClient = axios.create({
@@ -32,13 +43,17 @@ axiosClient.interceptors.response.use(
 const apiUrl = 'api'
 const clipboardReceiveApiUrl = `${apiUrl}/clipboard/receive`
 
+let pythonProcess = null
+
 // アプリ作成
 function createWindow () {
   // Pythonコード実行
-  PythonShell.run('./app/app.py', null, (err, result) => {
+  const pyshell = new PythonShell('./app/app.py')
+  pyshell.end((err) => {
     if (err) throw err
     console.log('error', err)
   })
+  pythonProcess = pyshell.childProcess
 
   // 起動処理
   const startUp = () => {
@@ -87,12 +102,17 @@ function createWindow () {
   startUp()
 }
 
-// 起動準備
+// // 起動準備
 app.whenReady()
   .then(createWindow)
 
-// Dockから非表示
+// Dock非表示
 app.dock.hide()
+
+// aboutダイアログ
+// app.setAboutPanelOptions({
+//   iconPath: ''
+// })
 
 // 常駐起動設定
 console.log('build', process.env.NODE_ENV)
@@ -107,19 +127,42 @@ if (process.env.NODE_ENV !== 'development') {
   })
 }
 
+const showApp = () => {
+  const mainWindow = BrowserWindow.getFocusedWindow()
+  if (mainWindow) {
+    mainWindow.center()
+    app.hide()
+  } else {
+    app.focus({ steal: true })
+    app.show()
+
+    // リロード
+    BrowserWindow.getAllWindows().forEach((v) => {
+      v.webContents.loadURL(mainAddr)
+    })
+  }
+}
+
 // 起動準備
 app.on('ready', () => {
   // ショートカット登録
-  globalShortcut.register('ctrl+space', () => {
-    const mainWindow = BrowserWindow.getFocusedWindow()
-    if (mainWindow) {
-      mainWindow.center()
-      app.hide()
-    } else {
-      app.focus({steal: true})
-      app.show()
-    }
-  })
+  globalShortcut.register(shortcutKey, showApp)
+
+  // トレイ登録
+  const trayIconPath = path.join(
+    __dirname,
+    'assets',
+    `clipboard_icon${nativeTheme.shouldUseDarkColors ? '_dark' : ''}.png`
+  )  
+  trayIcon = new Tray(nativeImage.createFromPath(trayIconPath))
+  const contextMenu = Menu.buildFromTemplate([
+    { label: `Show window (${shortcutKey.toUpperCase()})`, click: showApp },
+    { type: 'separator' },
+    { label: `About`, role: 'about' },
+    { label: 'Quit', role: 'quit' }
+  ])
+  trayIcon.setToolTip(app.name)
+  trayIcon.setContextMenu(contextMenu)
 })
 
 // アクティブで起動
@@ -152,4 +195,7 @@ app.on('quit', () => {
     .catch((err) => {
       console.log('error', err)
     })
+
+  // バックエンド終了
+  pythonProcess.kill('SIGINT')
 })

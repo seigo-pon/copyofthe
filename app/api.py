@@ -40,8 +40,15 @@ def catch_value(app, is_first, value):
   else:
     print('Copied to clipboard: {}'.format(value))
 
-    with app.app_context():
-      ClipboardModel.insert(value)
+    if value:
+      with app.app_context():
+        clipboard_value = ClipboardModel.get_by_value(value)
+        if clipboard_value:
+          ClipboardModel.update(clipboard_value.uid, value)
+        else:
+          ClipboardModel.insert(value)
+    else:
+      print('Empty value')
 
 
 class Tag(Resource):
@@ -240,13 +247,24 @@ class ClipboardCopy(Resource):
       return make_response('', 404)
     print('clipboard_copy post:', vars(clipboard_value))
 
-    if clipboard_receiver:
-      clipboard_receiver.stop()
+    clipboard_value_by_latest = ClipboardModel.get_by_latest()
+    if clipboard_value_by_latest:
+      if clipboard_value.uid == clipboard_value_by_latest.uid:
+          ClipboardModel.update(clipboard_value.uid, clipboard_value.value)
+
     pyperclip.copy(clipboard_value.value)
-    if clipboard_receiver:
+    ClipboardCopyModel.insert(parser.get('clipboard_uid'))
+
+    if clipboard_receiver and not clipboard_receiver.started:
+      print('clipboard_copy post: recovery clipboard receiver')
       clipboard_receiver.start()
 
-    ClipboardCopyModel.insert(parser.get('clipboard_uid'))
+    while True:
+      clipboard_value_by_latest = ClipboardModel.get_by_latest()
+      if clipboard_value_by_latest:
+        if clipboard_value.value == clipboard_value_by_latest.value:
+          break
+
     return make_response('', 201)
 
 

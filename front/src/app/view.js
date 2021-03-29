@@ -6,9 +6,9 @@ const useCase = new UseCase(new Repository())
 export default {
   data () {
     return {
-      pageId: null,
       pageLimitCount: 20,
       pageNum: 1,
+      reqId: null,
       clipboardItems: [],
       clipboardItemTotal: 0,
       keyword: null,
@@ -17,20 +17,26 @@ export default {
     }
   },
   created () {
-    this.pageId = (new Date()).getTime()
+  },
+  watch: {
+    keyword (v) {
+      console.log('keyword', v)
+    },
   },
   methods: {
     async getClipboardItems () {
-      const pageId = this.pageId
+      const reqId = (new Date()).getTime()
+      this.reqId = reqId
 
       const clipboardItems = await useCase.getClipboardItems(
         this.pageNum,
         this.pageLimitCount,
         this.keyword,
-        (this.filteredDate / 1000)  // msec -> sec
+        // msec -> sec
+        (this.filteredDate != null) ? (this.filteredDate / 1000) : null
       )
 
-      if (this.pageId != pageId) {
+      if (this.reqId != reqId) {
         console.log('getClipboardItems: no need request')
         return
       }
@@ -46,7 +52,7 @@ export default {
     async updateClipboardItems (keyword, date) {
       console.log('updateClipboardItems', keyword, date)
       this.keyword = keyword
-      this.filteredDate = date ? date.getTime() : null
+      this.filteredDate = (date != null) ? date.getTime() : null
       // update
       await this.getClipboardItems()
     },

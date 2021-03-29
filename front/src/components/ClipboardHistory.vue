@@ -59,7 +59,7 @@ export default {
   watch: {
     '$route.query' (v1, v2) {
       if (v1.date != v2.date) {
-        this.updateClipboardItems(null, this.getFilteredDate(v1.date != null ? v1.date: null))
+        this.updateClipboardItems(null, this.getFilteredDate(v1.date || null))
       }
     },
   },
