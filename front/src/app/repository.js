@@ -22,17 +22,20 @@ class Repository {
   constructor () {
   }
 
-  async getClipboard (page, limit, key, date, tags) {
+  async getClipboard (page, limit, key, tags, isFavorite, date) {
     try {
       let params = { page: page, limit: limit }
       if (key != null) {
-        params.key = key
-      }
-      if (date != null) {
-        params.date = date
+        params = Object.assign(params, { key: key })
       }
       if (tags != null) {
-        params.tags = tags
+        params = Object.assign(params, { tags: tags[0] })
+      }
+      if (isFavorite != null) {
+        params = Object.assign(params, { is_favorite: (isFavorite ? 1 : 0) })
+      }
+      if (date != null) {
+        params = Object.assign(params, { date: date })
       }
       console.log('getClipboard', params)
 
@@ -81,7 +84,7 @@ class Repository {
     try {
       let params = {}
       if (key != null) {
-        params.key = key
+        params = Object.assign(params, { key: key })
       }
 
       const response = await axiosClient.get(tagApiUrl, { params: params })

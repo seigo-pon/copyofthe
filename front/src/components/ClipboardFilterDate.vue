@@ -1,10 +1,10 @@
 <template>
   <div>
     <datepicker
-      v-model="filteredDate"
+      v-model="filteringDate"
       input-class="w-36 px-4 text-xl text-gray-600 focus:outline-none"
       :language="ja"
-      :open-date="filteredDate"
+      :open-date="filteringDate"
       :clear-button="true"
       format="yyyy/MM/dd"
       :placeholder="placeholderText"
@@ -24,7 +24,7 @@ export default {
   data () {
     return {
       ja: ja,
-      filteredDate: null,
+      filteringDate: null,
     }
   },
   props: {
@@ -38,10 +38,10 @@ export default {
     },
   },
   mounted () {
-    this.filteredDate = this.initalDate
+    this.filteringDate = this.initalDate
   },
   watch: {
-    filteredDate (v1, v2) {
+    filteringDate (v1, v2) {
       if (v1 != v2) {
         this.$emit('update-date', v1)
       }

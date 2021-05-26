@@ -21,8 +21,6 @@ import GithubImage from "@/assets/github.png"
 
 export default {
   name: 'AppFooter',
-  components: {
-  },
   data () {
     return {
       firstYear: process.env.VUE_APP_RELEASE_YEAR,
@@ -39,7 +37,7 @@ export default {
       } else {
         return `${this.firstYear}-${year}`
       }
-    }
+    },
   },
   methods: {
   },

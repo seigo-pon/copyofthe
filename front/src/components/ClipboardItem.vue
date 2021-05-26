@@ -16,6 +16,8 @@
     />
     <add-tag-modal
       v-model="showModalAddTag"
+      :last-tags="lastTags"
+      :tag-max-length="tagMaxLength"
       @click-ok="clickAddTagOk"
     />
     <modal
@@ -34,13 +36,13 @@
       <div class="flex-grow">
         <div class="flex flex-col">
           <div class="table table-fixed w-full">
-            <span class="text-lg font-bold table-cell truncate">{{ clipboardItem.value }}</span>
+            <span class="font-medium table-cell truncate">{{ clipboardItem.value }}</span>
           </div>
           <span class="text-xs text-gray-500">{{ getDate(clipboardItem.updatedAt) }}</span>
           <div class="flex pt-2">
             <template v-for="tag in clipboardItem.tags">
               <button
-                class="bg-gray-400 hover:bg-gray-600 flex items-center focus:outline-none focus:shadow-outline rounded-full mr-1 py-1 px-3 text-white text-xs font-bold"
+                class="bg-gray-400 hover:bg-gray-600 focus:outline-none focus:shadow-outline rounded-full mr-1 py-1 px-3 text-white text-xs font-bold"
                 @click="removeClipboardItemTag(tag, $event)"
                 :key="tag.id"
               >
@@ -48,7 +50,7 @@
               </button>
             </template>
             <button
-              class="hover:text-gray-400 flex items-center focus:outline-none focus:shadow-outline rounded-full"
+              class="hover:text-gray-400 focus:outline-none focus:shadow-outline rounded-full"
               @click="addClipboardItemTag($event)"
             >
               <svg
@@ -70,13 +72,13 @@
         </div>
       </div>
       <div class="flex-none">
-        <span class="flex items-center justify-center text-gray-600 text-sm ml-2">
+        <span class="items-center justify-center text-gray-600 text-sm ml-2">
           {{ clipboardItem.copiedCount }} copied
         </span>
       </div>
       <div class="flex-none">
         <button
-          class="hover:text-gray-400 flex items-center justify-center focus:outline-none focus:shadow-outline text-gray-500 ml-2"
+          class="hover:text-gray-400 justify-center focus:outline-none focus:shadow-outline text-gray-500 ml-2"
           :class="isFavoriteClipboardItem(clipboardItem)"
           @click="favorClipboardItem($event)"
         >
@@ -98,7 +100,7 @@
       </div>
       <div class="flex-none">
         <button
-          class="hover:text-gray-400 flex items-center justify-center focus:outline-none focus:shadow-outline text-gray-500 ml-4"
+          class="hover:text-gray-400 items-center justify-center focus:outline-none focus:shadow-outline text-gray-500 ml-4"
           @click="removeClipboardItem($event)"
         >
           <svg
@@ -122,15 +124,15 @@
 </template>
 
 <script>
-import Modal from './Modal.vue'
 import Notification from './Notification.vue'
+import Modal from './Modal.vue'
 import AddTagModal from './AddTagModal.vue'
 
 export default {
   name: 'ClipboardItem',
   components: {
-    Modal,
     Notification,
+    Modal,
     AddTagModal,
   },
   data () {
@@ -146,7 +148,15 @@ export default {
     clipboardItem: {
       type: Object,
       default: () => {},
-    }
+    },
+    lastTags: {
+      type: Array,
+      default: () => {},
+    },
+    tagMaxLength: {
+      type: Number,
+      default: 0,
+    },
   },
   mounted () {
   },
@@ -163,7 +173,7 @@ export default {
       this.removingTagId = tag.id
       this.showModalRemoveTag = true
     },
-    addClipboardItemTag (e) {
+    async addClipboardItemTag (e) {
       e.stopPropagation()
       this.showModalAddTag = true
     },

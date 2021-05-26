@@ -1,19 +1,24 @@
 <template>
   <div class="relative bg-white">
-    <div class="flex justify-between items-center my-6">
+    <div class="flex pt-1">
+      <div class="flex justify-end items-center w-full">
+        <clipboard-filter-option />
+      </div>
+    </div>
+    <div class="flex justify-between items-center my-3">
       <div class="flex justify-between items-center w-full">
         <div class="flex">
           <span class="px-4 text-gray-700 text-xl">Searched result</span>
-          <ClipboardFilterDate
+          <clipboard-filter-date
             placeholderText="All Days"
-            :initalDate="getFilteredDate($route.query.date)"
-            @update-date="updateFilteredDate"
+            :inital-date="getFilteringDate($route.query.date)"
+            @update-date="updateFilteringDate"
           />
         </div>
         <clipboard-item-count
-          :clipboardItemTotal="clipboardItemTotal"
-          :pageLimitCount="pageLimitCount"
-          :pageNum="pageNum"
+          :clipboard-item-total="clipboardItemTotal"
+          :page-limit-count="pageLimitCount"
+          :page-num="pageNum"
           @prev-page="updatePage"
           @next-page="updatePage"
         />
@@ -22,7 +27,7 @@
     <div class="my-4">
       <ul class="list-none">
         <template v-for="clipboardItem in clipboardItems">
-          <ClipboardItem
+          <clipboard-item
             :key="clipboardItem.id"
             :clipboard-item="clipboardItem"
             @copy-clipboard="copyClipboardItem"
@@ -38,42 +43,64 @@
 </template>
 
 <script>
-import ClipboardTable from './clipboardtable'
+import ClipboardPage from './clipboardpage'
 import View from '../app/view'
+import ClipboardFilterOption from './ClipboardFilterOption.vue'
 import ClipboardFilterDate from './ClipboardFilterDate.vue'
-import ClipboardItem from './ClipboardItem.vue'
 import ClipboardItemCount from './ClipboardItemCount.vue'
+import ClipboardItem from './ClipboardItem.vue'
 
 export default {
   name: 'ClipboardResult',
   components: {
+    ClipboardFilterOption,
     ClipboardFilterDate,
-    ClipboardItem,
     ClipboardItemCount,
+    ClipboardItem,
   },
-  mixins: [View, ClipboardTable],
+  mixins: [View, ClipboardPage],
   data () {
     return {
     }
   },
-  mounted () {
-    this.updateClipboardItems(
+  async mounted () {
+    await this.updateClipboardItems(
       this.getKeyword(this.$route.query.keyword),
-      this.getFilteredDate(this.$route.query.date)
+      this.getFilteringTag(this.$route.query.tag),
+      this.getFilteringFavorite(this.$route.query.favorite),
+      this.getFilteringDate(this.$route.query.date)
     )
+    this.checkClipboardItems()
   },
   watch: {
-    '$route.query' (v1, v2) {
+    async '$route.query' (v1, v2) {
       let keyword = this.keyword
       if (v1.keyword != v2.keyword) {
         keyword = this.getKeyword(v1.keyword || null)
       }
-      let filteredDate = this.filteredDate
-      if (v1.date != v2.date) {
-        filteredDate = (v1.date != null && v1.date != 0) ? v1.date : null
+      let filteringTag = this.filteringTag
+      if (v1.tag != v2.tag) {
+        filteringTag = this.getFilteringTag(v1.tag || null)
       }
-      if (keyword != this.keyword || filteredDate != this.filteredDate) {
-        this.updateClipboardItems(keyword, this.getFilteredDate(filteredDate))
+      let filteringFavorite = this.filteringFavorite
+      if (v1.favorite != v2.favorite) {
+        filteringFavorite = this.getFilteringFavorite(v1.favorite || null)
+      }
+      let filteringDate = this.filteringDate
+      if (v1.date != v2.date) {
+        filteringDate = (v1.date != null && v1.date != 0) ? v1.date : null
+      }
+      if (keyword != this.keyword ||
+        filteringTag != this.filteringTag ||
+        filteringFavorite != this.filteringFavorite ||
+        filteringDate != this.filteringDate) {
+        await this.updateClipboardItems(
+          keyword,
+          filteringTag,
+          filteringFavorite,
+          this.getFilteringDate(filteringDate)
+        )
+        this.checkClipboardItems()
       }
     },
   },
@@ -89,14 +116,7 @@ export default {
       if (this.clipboardItems.length === 0) {
         const path = '/clipboard/notfound'
 
-        let query = {}
-        if (this.$route.query.keyword) {
-          query = Object.assign(query, { keyword: this.$route.query.keyword })
-        }
-        if (this.$route.query.date) {
-          query = Object.assign(query, { date: this.$route.query.date })
-        }
-        
+        const query = this.getQuery()
         if (Object.keys(query).length != 0) {
           this.$router.push({ path: path, query: query })
             .catch(() => {})

@@ -11,6 +11,7 @@ app = Flask(__name__,
             static_folder=os.path.join(FRONTEND_DIR, 'dist', 'static'),
             template_folder=os.path.join(FRONTEND_DIR, 'dist'))
 app.config.from_pyfile('config.cfg')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.register_blueprint(api_bp)
 
 @app.route('/', defaults={'path': ''})

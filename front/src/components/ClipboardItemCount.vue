@@ -89,10 +89,10 @@ export default {
   },
   methods: {
     goPrevious () {
-      this.$$emit('prev-page', this.pageNum - 1)
+      this.$emit('prev-page', this.pageNum - 1)
     },
     goNext () {
-      this.$$emit('next-page', this.pageNum + 1)
+      this.$emit('next-page', this.pageNum + 1)
     },
   },
 }

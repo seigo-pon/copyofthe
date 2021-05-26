@@ -11,6 +11,7 @@
 				<div class="my-2">
           <div class="flex">
             <input
+              id="add-tag-input"
               v-model="tagValue"
               class="outline-none focus:outline-none w-full px-2"
               type="text"
@@ -19,10 +20,12 @@
               :maxlength="tagMaxLength"
               autofocus
               autocomplete="off"
+              spellcheck="false"
             />
             <button
+              id="tag-dropdown-button"
               v-if="lastTags.length > 0"
-              class="hover:text-gray-400 flex items-center focus:outline-none focus:shadow-outline rounded-full"
+              class="hover:text-gray-400 items-center focus:outline-none focus:shadow-outline rounded-full"
               @click="showLastTag = !showLastTag"
             >
               <template v-if="showLastTag">
@@ -59,16 +62,22 @@
               </template>
             </button>
           </div>
-          <div v-if="showLastTag" class="absolute overflow-y-auto shadow z-40 w-full mt-2 last-tag">
-            <template v-for="(lastTag, index) in lastTags">
-              <li
-                :key="index"
-                class="bg-white hover:bg-gray-200 py-2 px-2 cursor-pointer"
-                @click="clickLastTag(lastTag)"
-              >
-                <span>{{ lastTag.value }}</span>
-              </li>
-            </template>
+          <div
+            id="last-tag-dropdown"
+            v-if="showLastTag"
+            class="absolute overflow-y-auto shadow z-40 w-full mt-2 last-tag"
+          >
+            <ul class="list-none">
+              <template v-for="(lastTag, index) in lastTags">
+                <li
+                  :key="index"
+                  class="bg-white hover:bg-gray-200 py-2 px-2 cursor-pointer"
+                  @click="clickLastTag(lastTag)"
+                >
+                  <span>{{ lastTag.value }}</span>
+                </li>
+              </template>
+            </ul>
           </div>
         </div>
 				<div class="flex justify-end pt-2">
@@ -92,30 +101,37 @@
 </template>
 
 <script>
-import View from '../app/view'
-
 export default {
   name: 'AddTagModal',
   data () {
     return {
-      tagMaxLength: 30,
       tagValue: '',
       showLastTag: false,
     }
   },
-  mixins: [View],
   model: {
     prop: 'show',
-    event: 'update-show'
+    event: 'update-show',
   },
   props: {
     show: {
       type: Boolean,
       default: false,
     },
+    lastTags: {
+      type: Array,
+      default: () => [],
+    },
+    tagMaxLength: {
+      type: Number,
+      default: 0,
+    },
   },
-  async mounted () {
-    await this.getLastTags()
+  mounted () {
+    window.addEventListener('click', this.closeDropdown)
+  },
+  beforeDestroy () {
+    window.removeEventListener('click', this.closeDropdown)
   },
   watch: {
     show (v1, v2) {
@@ -127,15 +143,37 @@ export default {
         }, 100)
       }
     },
-    tagValue (v1, v2) {
-      if (v1 != v2) {
-        if (this.showLastTag) {
-          this.showLastTag = false
-        }
+    tagValue () {
+      if (this.showLastTag) {
+        this.showLastTag = false
       }
-    }
+    },
   },
   methods: {
+    closeDropdown (e) {
+      if (!this.showLastTag) {
+        return
+      }
+
+      let closeLastTagDropDwon = true
+      
+      const addTagInput = this.$el.querySelector('#add-tag-input')
+      if (addTagInput != null && addTagInput.contains(e.target)) {
+        closeLastTagDropDwon = false
+      }
+      const tagDropdownButton = this.$el.querySelector('#tag-dropdown-button')
+      if (tagDropdownButton != null && tagDropdownButton.contains(e.target)) {
+        closeLastTagDropDwon = false
+      }
+      const lastTagDropdown = this.$el.querySelector('#last-tag-dropdown')
+      if (lastTagDropdown != null && lastTagDropdown.contains(e.target)) {
+        closeLastTagDropDwon = false
+      }
+      
+      if (closeLastTagDropDwon) {
+        this.showLastTag = false
+      }
+    },
     clickLastTag (lastTag) {
       this.tagValue = lastTag.value
     },

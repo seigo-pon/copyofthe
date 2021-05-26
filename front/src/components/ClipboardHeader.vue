@@ -44,13 +44,14 @@
       </span>
       <input
         v-model="keywordRaw"
-        class="bg-transparent flex-grow text-3xl outline-none focus:outline-none w-full px-4"
+        class="bg-transparent flex-grow text-2xl outline-none focus:outline-none w-full px-4"
         type="text"
         name="keyword"
         placeholder="Search copied value"
         :maxlength="keywordMaxLength"
         autofocus
         autocomplete="off"
+        spellcheck="false"
       />
       <span class="flex-none pr-2">
         <a href="" target="_blank">
@@ -80,8 +81,6 @@
 <script>
 export default {
   name: 'ClipboardHeader',
-  components: {
-  },
   data () {
     return {
       showReload: false,
@@ -109,7 +108,7 @@ export default {
       if (v1 != v2) {
         this.$emit('update-keyword', this.keywordRaw)
       }
-    }
+    },
   },
   methods: {
     reload () {

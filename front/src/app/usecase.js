@@ -5,10 +5,18 @@ class UseCase {
     this.repository = repository
   }
 
-  async getClipboardItems (page, limit, key, date, tags) {
+  async getClipboardItems (page, limit, key, tags, isFavorite, date) {
     try {
       const lastTags = await this.repository.getTag()
-      const clipboardResult = await this.repository.getClipboard(page, limit, key, date, tags)
+      let tagIds = null
+      if (tags != null && tags.length > 0) {
+        tagIds = tags.map((v1) => {
+          return lastTags.find((v2) => {
+            return v2.value === v1
+          }).uid
+        })
+      }
+      const clipboardResult = await this.repository.getClipboard(page, limit, key, tagIds, isFavorite, date)
       return {
         values: clipboardResult.clipboard_values.map((v1) => {
           return {
@@ -48,7 +56,7 @@ class UseCase {
       const lastTags = await this.repository.getTag()
       return lastTags.map((v) => {
           return {
-            id: v.id,
+            id: v.uid,
             value: v.value
           }
         })
@@ -93,6 +101,12 @@ class UseCase {
       let tags = clipboardItem.tags.map((v) => {
         return v.id
       })
+      if (tags.findIndex((v) => {
+        return v === tag.uid
+      }) != -1) {
+        console.log('exist tag error', tagValue)
+        return
+      }
       tags.push(tag.uid)
 
       await this.repository.setClipboard(clipboardItem.id, tags)

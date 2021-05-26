@@ -8,12 +8,15 @@ export default {
     return {
       pageLimitCount: 20,
       pageNum: 1,
-      reqId: null,
+      requestId: null,
       clipboardItems: [],
       clipboardItemTotal: 0,
       keyword: null,
-      filteredDate: null,
+      filteringTag: null,
+      filteringFavorite: false,
+      filteringDate: null,
       lastTags: [],
+      tagMaxLength: 30,
     }
   },
   created () {
@@ -25,18 +28,20 @@ export default {
   },
   methods: {
     async getClipboardItems () {
-      const reqId = (new Date()).getTime()
-      this.reqId = reqId
+      const requestId = (new Date()).getTime()
+      this.requestId = requestId
 
       const clipboardItems = await useCase.getClipboardItems(
         this.pageNum,
         this.pageLimitCount,
         this.keyword,
+        (this.filteringTag != null) ? [this.filteringTag] : [],
+        this.filteringFavorite,
         // msec -> sec
-        (this.filteredDate != null) ? (this.filteredDate / 1000) : null
+        (this.filteringDate != null) ? (this.filteringDate / 1000) : null
       )
 
-      if (this.reqId != reqId) {
+      if (this.requestId != requestId) {
         console.log('getClipboardItems: no need request')
         return
       }
@@ -49,10 +54,12 @@ export default {
         this.clipboardItemTotal = 0
       }
     },
-    async updateClipboardItems (keyword, date) {
-      console.log('updateClipboardItems', keyword, date)
+    async updateClipboardItems (keyword, tag, isFavorite, date) {
+      console.log('updateClipboardItems', keyword, tag, isFavorite, date)
       this.keyword = keyword
-      this.filteredDate = (date != null) ? date.getTime() : null
+      this.filteringTag = tag
+      this.filteringFavorite = isFavorite
+      this.filteringDate = (date != null) ? date.getTime() : null
       // update
       await this.getClipboardItems()
     },
@@ -80,6 +87,7 @@ export default {
       console.log('addClipboardTag', clipboardItem, tagValue)
       await useCase.addClipboardTag(clipboardItem, tagValue)
       // update
+      await this.getLastTags()
       await this.getClipboardItems()
     },
     async updateFavoriteClipboard (clipboardItem) {

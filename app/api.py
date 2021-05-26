@@ -34,7 +34,7 @@ def catch_value(app, is_first, value):
 
     with app.app_context():
       clipboard_value = ClipboardModel.get_by_latest()
-      if clipboard_value is not None:
+      if clipboard_value:
         if clipboard_value.value != value:
           ClipboardModel.insert(value)
   else:
@@ -107,12 +107,13 @@ class Tag(Resource):
 
     clipboard_values = ClipboardModel.get_by_query(
       key=None,
-      date=None,
       tag_uids=parser.get('tags'),
+      is_favorite=None,
+      date=None,
       page=None,
       limit=1
     )
-    if clipboard_values is not None:
+    if clipboard_values:
       return make_response('', 409)
     print('tag delete:', vars(tag))
 
@@ -126,8 +127,9 @@ class Clipboard(Resource):
       def __init__(self):
         super().__init__()
         self.parser.add_argument('key', type=str, location='args')
-        self.parser.add_argument('date', type=int, location='args')
         self.parser.add_argument('tags', type=str, action='append', location='args')
+        self.parser.add_argument('is_favorite', type=int, location='args')
+        self.parser.add_argument('date', type=int, location='args')
         self.parser.add_argument('page', type=int, location='args')
         self.parser.add_argument('limit', type=int, location='args')
 
@@ -136,8 +138,9 @@ class Clipboard(Resource):
 
     clipboard_values = ClipboardModel.get_by_query(
       key=parser.get('key'),
-      date=parser.get('date'),
       tag_uids=parser.get('tags'),
+      is_favorite=(parser.get('is_favorite') == 1) if parser.get('is_favorite') else None,
+      date=parser.get('date'),
       page=parser.get('pages'),
       limit=parser.get('limit')
     )
@@ -157,7 +160,7 @@ class Clipboard(Resource):
         super().__init__()
         self.parser.add_argument('clipboard_uid', type=str, location='form', required=True)
         self.parser.add_argument('tags', type=str, action='split', location='form')
-        self.parser.add_argument('is_favorite', type=int, action='split', location='form')
+        self.parser.add_argument('is_favorite', type=int, location='form')
 
     parser = ClipboardTagRequestParser()
     parser.parse_args()
@@ -170,7 +173,7 @@ class Clipboard(Resource):
       return make_response('', 404)
     print('clipboard post:', clipboard_value)
 
-    if parser.get('tags') is not None:
+    if parser.get('tags'):
       now_tags = ClipboardTagModel.get_by_clipboard_uid(parser.get('clipboard_uid'))
       now_tag_uids = [now_tag.uid for now_tag in now_tags]
       print('clipboard post:', now_tag_uids)
@@ -192,7 +195,7 @@ class Clipboard(Resource):
           ClipboardTagModel.delete(now_tag_uid)
           print('clipboard post:', now_tag_uid)
 
-    if parser.get('is_favorite') is not None:
+    if parser.get('is_favorite'):
       favorite = ClipboardFavoriteModel.get_by_clipboard_uid(parser.get('clipboard_uid'))
       print('clipboard post:', favorite)
 
@@ -202,7 +205,7 @@ class Clipboard(Resource):
           ClipboardFavoriteModel.insert(parser.get('clipboard_uid'))
           print('clipboard post:', is_favorite)
       else:
-        if favorite is not None:
+        if favorite:
           ClipboardFavoriteModel.delete(favorite.uid)
           print('clipboard post:', is_favorite)
 
@@ -247,23 +250,31 @@ class ClipboardCopy(Resource):
       return make_response('', 404)
     print('clipboard_copy post:', vars(clipboard_value))
 
+    # 最新のものは再登録されないのでここで記録する
     clipboard_value_by_latest = ClipboardModel.get_by_latest()
     if clipboard_value_by_latest:
       if clipboard_value.uid == clipboard_value_by_latest.uid:
           ClipboardModel.update(clipboard_value.uid, clipboard_value.value)
 
+    # コピー
     pyperclip.copy(clipboard_value.value)
     ClipboardCopyModel.insert(parser.get('clipboard_uid'))
 
-    if clipboard_receiver and not clipboard_receiver.started:
-      print('clipboard_copy post: recovery clipboard receiver')
-      clipboard_receiver.start()
-
+    # クリップボードの登録が完了するまで待機する
+    i = 0
     while True:
       clipboard_value_by_latest = ClipboardModel.get_by_latest()
       if clipboard_value_by_latest:
         if clipboard_value.value == clipboard_value_by_latest.value:
           break
+
+      # タイムアウト
+      if i > 100:
+        return make_response('', 408)
+
+      # 待機
+      time.sleep(500)
+      i += 1
 
     return make_response('', 201)
 
