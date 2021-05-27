@@ -4,7 +4,7 @@
       v-model="keyword"
       class="fixed top-0 left-0 w-full z-10"
     />
-    <div class="mt-24 mb-8 mx-6">
+    <div class="mx-6 mt-24 mb-8">
       <router-view />
     </div>
     <!-- <app-footer class="bottom-0 w-full" /> -->

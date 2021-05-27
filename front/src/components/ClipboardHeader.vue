@@ -53,7 +53,7 @@
         autocomplete="off"
         spellcheck="false"
       />
-      <span class="flex-none pr-2">
+      <!-- <span class="flex-none pr-2">
         <a href="" target="_blank">
           <i>
             <svg
@@ -72,7 +72,7 @@
             </svg>
           </i>
         </a>
-      </span>
+      </span> -->
     </div>
     <div class="mx-4 border-b-2"></div>
   </header>

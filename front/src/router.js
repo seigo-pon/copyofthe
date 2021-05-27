@@ -4,6 +4,7 @@ import ClipboardHome from './components/ClipboardHome.vue'
 import ClipboardHistory from './components/ClipboardHistory.vue'
 import ClipboardResult from './components/ClipboardResult.vue'
 import ClipboardNotFound from './components/ClipboardNotFound.vue'
+import About from './components/About.vue'
 
 Vue.use(Router)
 
@@ -30,6 +31,10 @@ export default new Router({
           component: ClipboardNotFound,
         },
       ],
+    },
+    {
+      path: '/about',
+      component: About,
     },
   ]
 })
