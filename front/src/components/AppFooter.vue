@@ -39,9 +39,6 @@ export default {
         return `${this.firstYear}-${year}`
       }
     },
-    getTwitterPageLink () {
-      return `https://twitter.com/${this.username}`
-    },
     getGithubPageLink () {
       return `https://github.com/${this.username}`
     },

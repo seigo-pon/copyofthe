@@ -70,7 +70,7 @@
 </template>
 
 <script>
-const tagNotSpecified = "Not specified"
+const tagNoSelection = "Unspecified"
 
 export default {
   name: 'ClipboardFilterOption',
@@ -110,7 +110,7 @@ export default {
       return (this.tagValue != null)
     },
     getTagValue () {
-      return this.isSpcifiedTag ? this.tagValue : tagNotSpecified
+      return this.isSpcifiedTag ? this.tagValue : tagNoSelection
     },
   },
   watch: {
@@ -126,7 +126,7 @@ export default {
         // 指定なしを追加
         this.lastTags.unshift({
           id: null,
-          value: tagNotSpecified
+          value: tagNoSelection
         })
       }
     },

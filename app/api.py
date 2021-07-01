@@ -4,10 +4,13 @@ from clipboard.clipboard_receiver import ClipboardReceiver
 from flask import Blueprint, current_app, jsonify, make_response
 from flask_restful import Api, Resource, reqparse, inputs
 from models import (
-  TagModel, ClipboardModel, ClipboardTagModel, ClipboardFavoriteModel, ClipboardCopyModel,
+  AppConfigurationModel, TagModel,
+  ClipboardModel, ClipboardTagModel,
+  ClipboardFavoriteModel, ClipboardCopyModel,
 )
 from schemas import (
-  TagSchema, ClipboardSchema, ClipboardCopySchema
+  AppConfigurationSchema, TagSchema,
+  ClipboardSchema, ClipboardCopySchema
 )
 
 api_bp = Blueprint('api',
@@ -49,6 +52,37 @@ def catch_value(app, is_first, value):
           ClipboardModel.insert(value)
     else:
       print('Empty value')
+
+
+class AppConfiguration(Resource):
+  def get(self):
+    app_config = AppConfigurationModel.get()
+    if app_config is None:
+      return make_response('', 400)
+    print('app_config get:', vars(app_config))
+
+    app_config_schema = AppConfigurationSchema()
+    return make_response(jsonify({'configuration': app_config_schema.dump(app_config)}))
+
+  def post(self):
+    class AppConfigurationRequestParser(ApiRequestParser):
+      def __init__(self):
+        super().__init__()
+        self.parser.add_argument('clipboard_expiration_day', type=int, location='form', required=True)
+
+    parser = AppConfigurationRequestParser()
+    parser.parse_args()
+
+    if parser.get('clipboard_expiration_day') is None:
+      return make_response('', 400)
+
+    app_config = AppConfigurationModel.get()
+    if app_config is None:
+      return make_response('', 400)
+    print('app_config post:', vars(app_config))
+
+    AppConfigurationModel.update(parser.get('clipboard_expiration_day'))
+    return make_response('', 200)
 
 
 class Tag(Resource):
@@ -118,7 +152,7 @@ class Tag(Resource):
     print('tag delete:', vars(tag))
 
     TagModel.delete(parser.get('tag_uid'))
-    return make_response('', 201)
+    return make_response('', 204)
 
 
 class Clipboard(Resource):
@@ -138,7 +172,7 @@ class Clipboard(Resource):
 
     clipboard_values = ClipboardModel.get_by_query(
       key=parser.get('key'),
-      tag_uids=parser.get('tags'),
+      tags=parser.get('tags'),
       is_favorite=(parser.get('is_favorite') == 1) if parser.get('is_favorite') else None,
       date=parser.get('date'),
       page=parser.get('pages'),
@@ -229,7 +263,7 @@ class Clipboard(Resource):
     print('clipboard delete:', vars(clipboard_value))
 
     ClipboardModel.delete(parser.get('clipboard_uid'))
-    return make_response('', 200)
+    return make_response('', 204)
 
 
 class ClipboardCopy(Resource):
@@ -250,33 +284,23 @@ class ClipboardCopy(Resource):
       return make_response('', 404)
     print('clipboard_copy post:', vars(clipboard_value))
 
-    # 最新のものは再登録されないのでここで記録する
-    clipboard_value_by_latest = ClipboardModel.get_by_latest()
-    if clipboard_value_by_latest:
-      if clipboard_value.uid == clipboard_value_by_latest.uid:
-          ClipboardModel.update(clipboard_value.uid, clipboard_value.value)
+    ClipboardModel.update(clipboard_value.uid, clipboard_value.value)
 
     # コピー
     pyperclip.copy(clipboard_value.value)
     ClipboardCopyModel.insert(parser.get('clipboard_uid'))
 
-    # クリップボードの登録が完了するまで待機する
-    i = 0
-    while True:
-      clipboard_value_by_latest = ClipboardModel.get_by_latest()
-      if clipboard_value_by_latest:
-        if clipboard_value.value == clipboard_value_by_latest.value:
-          break
+    return make_response('', 200)
 
-      # タイムアウト
-      if i > 100:
-        return make_response('', 408)
 
-      # 待機
-      time.sleep(500)
-      i += 1
+class ClipboardCleanup(Resource):
+  def delete(self):
+    app_config = AppConfigurationModel.get()
+    if app_config is None:
+      return make_response('', 400)
 
-    return make_response('', 201)
+    ClipboardModel.delete_by_expiration_day(app_config.clipboard_expiration_day)
+    return make_response('', 204)
 
 
 class ClipboardReceive(Resource):
@@ -288,11 +312,13 @@ class ClipboardReceive(Resource):
   def delete(self):
     if clipboard_receiver:
       clipboard_receiver.stop()
-    return make_response('', 200)
+    return make_response('', 204)
 
 
 api = Api(api_bp)
+api.add_resource(AppConfiguration, '/configuration')
 api.add_resource(Tag, '/tag')
 api.add_resource(Clipboard, '/clipboard')
 api.add_resource(ClipboardCopy, '/clipboard/copy')
+api.add_resource(ClipboardCleanup, '/clipboard/cleanup')
 api.add_resource(ClipboardReceive, '/clipboard/receive')

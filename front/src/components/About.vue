@@ -3,7 +3,7 @@
     <div class="mx-6 my-4 text-center">
       <div class="inline-block bg-white border border-gray-100 shadow-sm justify-center items-center py-3 px-4">
         <div class="mx-4 my-4">
-          <img class="block m-auto w-40" :src="getGithubProfileIcon" alt="avatar">
+          <img class="block rounded-full m-auto w-40" :src="getGithubProfileIcon" alt="avatar">
         </div>
         <div class="text-center">
           <span class="text-lg font-bold uppercase">
@@ -60,9 +60,6 @@ export default {
       } else {
         return `${this.firstYear}-${year}`
       }
-    },
-    getTwitterPageLink () {
-      return `https://twitter.com/${this.username}`
     },
     getGithubPageLink () {
       return `https://github.com/${this.username}`

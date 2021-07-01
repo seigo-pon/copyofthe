@@ -14,6 +14,36 @@ def get_end_of_day(date):
   start = get_start_of_day(date)
   return start + timedelta(hours=24)
 
+
+class AppConfigurationModel(db.Model):
+  __tablename__ = 'app_configuration_table'
+
+  uid = db.Column(db.String(100), primary_key=True)
+  clipboard_expiration_day = db.Column(db.Integer, nullable=False)
+  created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+  updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+
+  @staticmethod
+  def get():
+    return AppConfigurationModel.query.first()
+
+  @staticmethod
+  def insert(clipboard_expiration_day):
+    model = AppConfigurationModel(
+      uid=uuid.uuid4().hex,
+      clipboard_expiration_day=clipboard_expiration_day
+    )
+    db.session.add(model)
+    db.session.commit()
+
+  @staticmethod
+  def update(clipboard_expiration_day):
+    model = AppConfigurationModel.query.first()
+    if model:
+      model.clipboard_expiration_day = clipboard_expiration_day
+      db.session.commit()
+
+
 class TagModel(db.Model):
   __tablename__ = 'tag_table'
 
@@ -71,7 +101,7 @@ class ClipboardModel(db.Model):
     return db.desc(ClipboardModel.updated_at)
 
   @staticmethod
-  def get_by_query(key, tag_uids, is_favorite, date, page, limit):
+  def get_by_query(key, tags, is_favorite, date, page, limit):
     if page is None:
       page = 1
     if limit is None:
@@ -87,8 +117,8 @@ class ClipboardModel(db.Model):
       return ([], 0)
 
     tag_uids = None
-    if tag_uids:
-      clipboard_tags = ClipboardTagModel.get_by_tag(tag_uids)
+    if tags:
+      clipboard_tags = ClipboardTagModel.get_by_tag(tags)
       tag_uids = [clipboard_tag.clipboard_uid for clipboard_tag in clipboard_tags]
 
     if tag_uids and len(tag_uids) == 0:
@@ -142,7 +172,6 @@ class ClipboardModel(db.Model):
     model = ClipboardModel.query.filter_by(uid=uid).first()
     if model:
       model.value = value
-      model.created_at = datetime.now()
       db.session.commit()
 
   @staticmethod
@@ -152,14 +181,25 @@ class ClipboardModel(db.Model):
       db.session.delete(model)
       db.session.commit()
 
+  @staticmethod
+  def delete_by_expiration_day(expiration_day):
+    end_at = get_start_of_day(datetime.now()) - timedelta(days=expiration_day + 1)
+    models = ClipboardModel.query.filter(
+      ClipboardModel.created_at <= end_at
+    ).order_by(ClipboardModel.created_at).all()
+    if models is not None and len(models) > 0:
+      for model in models:
+        db.session.delete(model)
+        db.session.commit()
+
 
 class ClipboardTagModel(db.Model):
   __tablename__ = 'clipboard_tag_table'
 
   uid = db.Column(db.String(100), primary_key=True)
-  clipboard_uid = db.Column(db.Integer, db.ForeignKey('clipboard_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
+  clipboard_uid = db.Column(db.String(100), db.ForeignKey('clipboard_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
   clipboard = db.relationship("ClipboardModel", backref="tags")
-  tag_uid = db.Column(db.Integer, db.ForeignKey('tag_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
+  tag_uid = db.Column(db.String(100), db.ForeignKey('tag_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
   created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
   @staticmethod
@@ -192,7 +232,7 @@ class ClipboardFavoriteModel(db.Model):
   __tablename__ = 'clipboard_favorite_table'
 
   uid = db.Column(db.String(100), primary_key=True)
-  clipboard_uid = db.Column(db.Integer, db.ForeignKey('clipboard_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
+  clipboard_uid = db.Column(db.String(100), db.ForeignKey('clipboard_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
   clipboard = db.relationship("ClipboardModel", backref=db.backref("is_favorite", uselist=False))
   created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
@@ -222,7 +262,7 @@ class ClipboardCopyModel(db.Model):
   __tablename__ = 'clipboard_copy_table'
 
   uid = db.Column(db.String(100), primary_key=True)
-  clipboard_uid = db.Column(db.Integer, db.ForeignKey('clipboard_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
+  clipboard_uid = db.Column(db.String(100), db.ForeignKey('clipboard_table.uid', onupdate='CASCADE', ondelete='CASCADE'))
   clipboard = db.relationship("ClipboardModel", backref="copies")
   created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
@@ -233,6 +273,9 @@ class ClipboardCopyModel(db.Model):
     db.session.commit()
 
 
-def init_db(app):
+def init_db(app, clipboard_expiration_day):
     db.init_app(app)
     db.create_all()
+
+    if AppConfigurationModel.get() is None:
+      AppConfigurationModel.insert(clipboard_expiration_day)

@@ -1,9 +1,20 @@
 from flask_marshmallow import Marshmallow
 from models import (
-  TagModel, ClipboardModel, ClipboardTagModel, ClipboardFavoriteModel, ClipboardCopyModel
+  AppConfigurationModel, TagModel,
+  ClipboardModel, ClipboardTagModel,
+  ClipboardFavoriteModel, ClipboardCopyModel
 )
 
 ma = Marshmallow()
+
+
+class AppConfigurationSchema(ma.SQLAlchemySchema):
+  class Meta:
+    model = AppConfigurationModel
+
+  clipboard_expiration_day = ma.auto_field()
+  created_at = ma.auto_field(dump_only=True)
+  updated_at = ma.auto_field(dump_only=True)
 
 
 class TagSchema(ma.SQLAlchemySchema):

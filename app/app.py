@@ -6,6 +6,7 @@ from models import init_db
 FRONTEND_DIR = '../front'
 APP_URL = '127.0.0.1'
 APP_PORT = 5000
+APP_CLIPBOARD_EXP_DAY = 90
 
 app = Flask(__name__,
             static_folder=os.path.join(FRONTEND_DIR, 'dist', 'static'),
@@ -21,6 +22,6 @@ def index(path):
 
 if __name__ == "__main__":
   with app.app_context():
-    init_db(app)
+    init_db(app, APP_CLIPBOARD_EXP_DAY)
 
   app.run(host=APP_URL, port=APP_PORT)
